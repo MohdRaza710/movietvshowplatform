@@ -1,7 +1,7 @@
 'use server'
 
 import { createServerClient } from '@/lib/supabase-server'
-import { Review, WatchlistItem } from '@/types'
+import { Review, WatchlistItem } from '@/types/database'
 import { revalidatePath } from 'next/cache'
 
 // Auth Actions
