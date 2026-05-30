@@ -1,13 +1,13 @@
 'use client'
 
-import React from 'react'
+import React, { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store'
 import { Film } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-export default function SetSessionPage() {
+function SetSessionContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { setUser } = useAuthStore()
@@ -102,5 +102,28 @@ export default function SetSessionPage() {
       </motion.div>
       <p className="text-slate-300 text-sm animate-pulse">{status}</p>
     </div>
+  )
+}
+
+function SetSessionFallback() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+        className="w-12 h-12 bg-linear-to-br from-[oklch(0.80_0.16_70)] to-[oklch(0.55_0.22_280)] rounded-xl flex items-center justify-center shadow-lg"
+      >
+        <Film size={22} className="text-white" />
+      </motion.div>
+      <p className="text-slate-300 text-sm animate-pulse">Completing sign in...</p>
+    </div>
+  )
+}
+
+export default function SetSessionPage() {
+  return (
+    <Suspense fallback={<SetSessionFallback />}>
+      <SetSessionContent />
+    </Suspense>
   )
 }

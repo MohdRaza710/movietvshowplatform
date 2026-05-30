@@ -81,15 +81,7 @@ export async function GET(request: NextRequest) {
   )
 
   if (upsertError) {
-    await supabase.from('profiles').upsert(
-      {
-        id: data.user.id,
-        display_name: data.user.user_metadata?.full_name || username,
-        username,
-        avatar_url: avatarUrl,
-      },
-      { onConflict: 'id' }
-    )
+    console.error('Failed to upsert user profile:', upsertError.message)
   }
 
   return redirectResponse

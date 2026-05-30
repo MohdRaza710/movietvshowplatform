@@ -57,11 +57,7 @@ export default function RegisterPage() {
       })
 
       if (profileError) {
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
-          username,
-          display_name: username,
-        })
+        throw profileError
       }
 
       if (data.session) {

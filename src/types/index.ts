@@ -68,8 +68,8 @@ export interface User {
   id: string
   email: string
   username: string
-  avatar_url?: string
-  bio?: string
+  avatar_url?: string | null
+  bio?: string | null
   created_at: string
   updated_at: string
 }
@@ -82,9 +82,9 @@ export interface WatchlistItem {
   title: string
   poster_path: string
   status: 'plan_to_watch' | 'watching' | 'completed' | 'dropped'
-  rating?: number
-  notes?: string
-  watched_at?: string
+  rating?: number | null
+  notes?: string | null
+  watched_at?: string | null
   created_at: string
   updated_at: string
 }
