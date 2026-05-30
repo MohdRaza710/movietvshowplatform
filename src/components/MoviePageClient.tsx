@@ -143,6 +143,12 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
                 </Button>
               )}
               <SocialShare title={movie.title} url={shareUrl} />
+              
+              <Button disabled className="bg-slate-700 gap-2">
+
+                <Play size={18} />
+                Watch Movie
+              </Button>
             </div>
           </motion.div>
         </div>

@@ -1,9 +1,9 @@
 'use client'
 
 import React from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
-import { Play } from 'lucide-react'
+import { Play, X } from 'lucide-react'
 import { getTMDBImageUrl, getRating, getYear } from '@/lib/tmdb'
 import { ReviewForm } from '@/components/ReviewForm'
 import { ReviewCard } from '@/components/ReviewCard'
@@ -19,8 +19,54 @@ interface TVPageClientProps {
 }
 
 export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
+  const [trailerOpen, setTrailerOpen] = React.useState(false)
+
+  // Find the official trailer from TMDB video results
+  const trailer = show.videos?.results?.find(
+    (v) => v.type === 'Trailer' && v.site === 'YouTube'
+  ) ?? show.videos?.results?.[0]
+
+  const hasTrailer = !!trailer
+
   return (
     <div className="min-h-full">
+      {/* Trailer Modal */}
+      <AnimatePresence>
+        {trailerOpen && trailer && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={() => setTrailerOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="relative w-full max-w-4xl aspect-video rounded-xl overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setTrailerOpen(false)}
+                className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-colors"
+                aria-label="Close trailer"
+              >
+                <X size={18} />
+              </button>
+              <iframe
+                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0`}
+                title={trailer.name ?? `${show.name} Trailer`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Hero Backdrop */}
       <div className="relative h-100 overflow-hidden">
         <Image
@@ -34,7 +80,7 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 -mt-32 relative z-10 pb-12">
+      <div className="max-w-7xl mx-auto px-4 mt-32 relative z-10 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           {/* Poster */}
           <motion.div
@@ -90,14 +136,24 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
             <p className="text-lg text-slate-200 leading-relaxed">{show.overview}</p>
 
             <div className="flex gap-4 flex-wrap">
-              {show.videos?.results?.length > 0 && (
-                <Button className="bg-cyan-500 hover:bg-cyan-600 gap-2">
+              {hasTrailer && (
+                <Button
+                  className="bg-cyan-500 hover:bg-cyan-600 gap-2"
+                  onClick={() => setTrailerOpen(true)}
+                >
                   <Play size={18} />
                   Watch Trailer
                 </Button>
               )}
               <SocialShare title={show.name} url={shareUrl} />
+              
+              <Button disabled className="bg-slate-700 gap-2">
+                
+                <Play size={18} />
+                Watch Movie
+              </Button>
             </div>
+
           </motion.div>
         </div>
 
