@@ -1,13 +1,11 @@
 import React from 'react'
 import { getActivityFeed } from '@/actions'
 import { ActivityFeed } from '@/components/ActivityFeed'
-import { supabase } from '@/lib/supabase'
-import { motion } from 'framer-motion'
+import { createServerClient } from '@/lib/supabase-server'
 
 async function getCurrentUser() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
   return user
 }
 
@@ -26,15 +24,10 @@ export default async function FeedPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
+      <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">Your Feed</h1>
         <p className="text-slate-400">See what your friends are watching</p>
-      </motion.div>
-
+      </div>
       <ActivityFeed
         items={activities.map((activity: any) => ({
           id: activity.id,

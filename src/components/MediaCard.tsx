@@ -31,16 +31,17 @@ export function MediaCard({
       className="group relative rounded-lg overflow-hidden"
     >
       <Link href={`/${type}/${media.id}`}>
-        <div className="relative w-full aspect-[2/3] bg-slate-800 rounded-lg overflow-hidden">
+        <div className="relative w-full aspect-2/3 bg-slate-800 rounded-lg overflow-hidden">
           <Image
             src={getTMDBImageUrl(media.poster_path, 'w342')}
             alt={title}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover group-hover:scale-110 transition-transform duration-300"
           />
 
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
           {/* Info on hover */}
           <div className="absolute inset-0 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">

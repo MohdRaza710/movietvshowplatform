@@ -2,7 +2,9 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Share2, Facebook, Twitter, Copy } from 'lucide-react'
+import { Share2, Copy } from 'lucide-react'
+import { FaFacebook } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
@@ -56,14 +58,14 @@ export function SocialShare({ title, url, posterUrl }: SocialShareProps) {
             onClick={shareToTwitter}
             className="w-full px-4 py-2 flex items-center gap-2 hover:bg-slate-700 transition-colors text-left rounded-t-lg"
           >
-            <Twitter size={16} />
+            <FaXTwitter size={16} />
             <span>Share on Twitter</span>
           </button>
           <button
             onClick={shareToFacebook}
             className="w-full px-4 py-2 flex items-center gap-2 hover:bg-slate-700 transition-colors text-left"
           >
-            <Facebook size={16} />
+            <FaFacebook size={16} />
             <span>Share on Facebook</span>
           </button>
           <button

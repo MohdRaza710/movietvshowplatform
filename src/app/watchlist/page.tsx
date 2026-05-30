@@ -137,14 +137,15 @@ export default function WatchlistPage() {
                       className="group relative"
                     >
                       <Link href={`/${item.media_type}/${item.media_id}`}>
-                        <div className="relative aspect-[2/3] rounded-lg overflow-hidden">
+                        <div className="relative aspect-2/3 rounded-lg overflow-hidden">
                           <Image
                             src={getTMDBImageUrl(item.poster_path, 'w342')}
                             alt={item.title}
                             fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="object-cover group-hover:scale-110 transition-transform"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
                           {item.rating && (
                             <div className="absolute bottom-2 left-2 bg-yellow-500/90 px-2 py-1 rounded text-xs font-bold text-black opacity-0 group-hover:opacity-100 transition-opacity">

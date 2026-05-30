@@ -4,9 +4,8 @@ import React from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Search, User, LogOut, Menu } from 'lucide-react'
+import { Search, User, LogOut } from 'lucide-react'
 import { useAuthStore } from '@/store'
-import { signOut } from '@/actions'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -37,7 +36,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-gradient-to-b from-slate-950 to-slate-950/80 border-b border-slate-800/50 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 bg-linear-to-b from-slate-950 to-slate-950/80 border-b border-slate-800/50 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
@@ -47,10 +46,10 @@ export function Header() {
               whileTap={{ scale: 0.95 }}
               className="flex items-center gap-2"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">CV</span>
+              <div className="w-8 h-8 bg-linear-to-br from-cyan-400 to-cyan-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">CV</span>
               </div>
-              <span className="font-bold text-lg bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">
+              <span className="font-bold text-lg bg-linear-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">
                 CineVault
               </span>
             </motion.div>
@@ -94,11 +93,7 @@ export function Header() {
                   className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
                 >
                   {user.avatar_url ? (
-                    <img
-                      src={user.avatar_url}
-                      alt={user.username}
-                      className="w-8 h-8 rounded-full"
-                    />
+                    <img src={user.avatar_url} alt={user.username} className="w-8 h-8 rounded-full" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
                       <User size={16} className="text-cyan-300" />
@@ -111,23 +106,25 @@ export function Header() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-lg"
+                    className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50"
                   >
                     <Link
                       href={`/profile/${user.id}`}
-                      className="block px-4 py-2 hover:bg-slate-700 rounded-t-lg"
+                      onClick={() => setShowMenu(false)}
+                      className="block px-4 py-2 hover:bg-slate-700 rounded-t-lg text-sm text-white"
                     >
                       My Profile
                     </Link>
-                    <Link href="/watchlist" className="block px-4 py-2 hover:bg-slate-700">
+                    <Link
+                      href="/watchlist"
+                      onClick={() => setShowMenu(false)}
+                      className="block px-4 py-2 hover:bg-slate-700 text-sm text-white"
+                    >
                       My Watchlist
                     </Link>
                     <button
-                      onClick={() => {
-                        handleLogout()
-                        setShowMenu(false)
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-slate-700 rounded-b-lg text-red-400 flex items-center gap-2"
+                      onClick={() => { handleLogout(); setShowMenu(false) }}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-700 rounded-b-lg text-red-400 flex items-center gap-2 text-sm"
                     >
                       <LogOut size={16} />
                       Logout
@@ -136,9 +133,18 @@ export function Header() {
                 )}
               </div>
             ) : (
-              <Link href="/login">
-                <Button className="bg-cyan-500 hover:bg-cyan-600">Sign In</Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link href="/login">
+                  <Button variant="outline" className="border-slate-700 text-slate-300 hover:text-white hover:border-slate-500">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
         </div>

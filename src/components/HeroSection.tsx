@@ -15,18 +15,19 @@ interface HeroSectionProps {
 
 export function HeroSection({ movie }: HeroSectionProps) {
   return (
-    <div className="relative h-[600px] overflow-hidden">
+    <div className="relative h-150 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
         <Image
           src={getTMDBImageUrl(movie.backdrop_path, 'original')}
           alt={movie.title}
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-slate-950 via-slate-950/80 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-slate-950 to-transparent" />
       </div>
 
       {/* Content */}
