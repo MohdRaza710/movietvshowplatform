@@ -1,279 +1,254 @@
--- =============================================
--- CineVault Database Schema
+-- ============================================
+-- CineVault - Safe Schema Migration
 -- Run this in Supabase SQL Editor
--- =============================================
+-- ============================================
 
--- Enable UUID extension
-create extension if not exists "uuid-ossp";
-
--- =============================================
--- 1. PROFILES TABLE
--- Extends auth.users with app-specific data
--- =============================================
-create table public.profiles (
-  id uuid references auth.users(id) on delete cascade primary key,
-  display_name text,
-  username text unique,
-  avatar_url text,
-  bio text default '',
-  created_at timestamptz default now() not null,
-  updated_at timestamptz default now() not null
+-- 1. PUBLIC USERS TABLE
+CREATE TABLE IF NOT EXISTS public.users (
+  id          uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email       text NOT NULL,
+  username    text NOT NULL,
+  avatar_url  text,
+  bio         text,
+  created_at  timestamptz DEFAULT now() NOT NULL,
+  updated_at  timestamptz DEFAULT now() NOT NULL
 );
 
--- Auto-create profile on user signup
-create or replace function public.handle_new_user()
-returns trigger as $$
-begin
-  insert into public.profiles (id, display_name, username, avatar_url)
-  values (
-    new.id,
-    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
-    lower(replace(coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)), ' ', '_')) || '_' || substr(new.id::text, 1, 8),
-    coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture', null)
-  );
-  return new;
-end;
-$$ language plpgsql security definer;
-
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
-
--- =============================================
--- 2. REVIEWS TABLE
--- =============================================
-create table public.reviews (
-  id uuid default uuid_generate_v4() primary key,
-  user_id uuid references public.profiles(id) on delete cascade not null,
-  media_id integer not null,
-  media_type text not null check (media_type in ('movie', 'tv')),
-  rating integer not null check (rating >= 1 and rating <= 10),
-  content text not null check (char_length(content) >= 10),
-  created_at timestamptz default now() not null,
-  updated_at timestamptz default now() not null,
-  -- One review per user per media item
-  unique(user_id, media_id, media_type)
+-- 2. WATCHLIST TABLE
+CREATE TABLE IF NOT EXISTS public.watchlist (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  media_type  text NOT NULL CHECK (media_type IN ('movie', 'tv')),
+  media_id    integer NOT NULL,
+  title       text NOT NULL,
+  poster_path text NOT NULL DEFAULT '',
+  status      text NOT NULL DEFAULT 'plan_to_watch'
+              CHECK (status IN ('plan_to_watch', 'watching', 'completed', 'dropped')),
+  rating      numeric,
+  notes       text,
+  watched_at  timestamptz,
+  created_at  timestamptz DEFAULT now() NOT NULL,
+  updated_at  timestamptz DEFAULT now() NOT NULL
 );
 
--- =============================================
--- 3. REVIEW LIKES TABLE
--- =============================================
-create table public.review_likes (
-  id uuid default uuid_generate_v4() primary key,
-  user_id uuid references public.profiles(id) on delete cascade not null,
-  review_id uuid references public.reviews(id) on delete cascade not null,
-  created_at timestamptz default now() not null,
-  unique(user_id, review_id)
+-- Add unique constraint to watchlist if not exists
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'watchlist_user_id_media_type_media_id_key'
+  ) THEN
+    ALTER TABLE public.watchlist
+      ADD CONSTRAINT watchlist_user_id_media_type_media_id_key
+      UNIQUE (user_id, media_type, media_id);
+  END IF;
+END $$;
+
+-- 3. REVIEWS TABLE
+CREATE TABLE IF NOT EXISTS public.reviews (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  media_type  text NOT NULL CHECK (media_type IN ('movie', 'tv')),
+  media_id    integer NOT NULL,
+  title       text NOT NULL,
+  content     text NOT NULL,
+  rating      integer NOT NULL CHECK (rating BETWEEN 1 AND 10),
+  created_at  timestamptz DEFAULT now() NOT NULL,
+  updated_at  timestamptz DEFAULT now() NOT NULL
 );
 
--- =============================================
--- 4. WATCHLIST TABLE
--- =============================================
-create table public.watchlist (
-  id uuid default uuid_generate_v4() primary key,
-  user_id uuid references public.profiles(id) on delete cascade not null,
-  media_id integer not null,
-  media_type text not null check (media_type in ('movie', 'tv')),
-  status text not null default 'plan_to_watch' check (status in ('plan_to_watch', 'watching', 'completed', 'dropped')),
-  user_rating integer check (user_rating is null or (user_rating >= 1 and user_rating <= 10)),
-  notes text default '',
-  is_public boolean default true,
-  poster_path text,
-  title text not null,
-  created_at timestamptz default now() not null,
-  updated_at timestamptz default now() not null,
-  unique(user_id, media_id, media_type)
+-- Safely add likes_count column if it doesn't exist
+ALTER TABLE public.reviews
+  ADD COLUMN IF NOT EXISTS likes_count integer DEFAULT 0 NOT NULL;
+
+-- Add unique constraint to reviews if not exists
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'reviews_user_id_media_type_media_id_key'
+  ) THEN
+    ALTER TABLE public.reviews
+      ADD CONSTRAINT reviews_user_id_media_type_media_id_key
+      UNIQUE (user_id, media_type, media_id);
+  END IF;
+END $$;
+
+-- 4. REVIEW LIKES TABLE
+CREATE TABLE IF NOT EXISTS public.review_likes (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  review_id   uuid NOT NULL REFERENCES public.reviews(id) ON DELETE CASCADE,
+  created_at  timestamptz DEFAULT now() NOT NULL,
+  UNIQUE (user_id, review_id)
 );
 
--- =============================================
 -- 5. FOLLOWS TABLE
--- =============================================
-create table public.follows (
-  id uuid default uuid_generate_v4() primary key,
-  follower_id uuid references public.profiles(id) on delete cascade not null,
-  following_id uuid references public.profiles(id) on delete cascade not null,
-  created_at timestamptz default now() not null,
-  unique(follower_id, following_id),
-  check (follower_id != following_id)
+CREATE TABLE IF NOT EXISTS public.follows (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  follower_id  uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  following_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  created_at   timestamptz DEFAULT now() NOT NULL,
+  UNIQUE (follower_id, following_id)
 );
 
--- =============================================
--- 6. ACTIVITIES TABLE
--- =============================================
-create table public.activities (
-  id uuid default uuid_generate_v4() primary key,
-  user_id uuid references public.profiles(id) on delete cascade not null,
-  activity_type text not null check (activity_type in ('reviewed', 'added_to_watchlist', 'completed', 'started_watching', 'dropped', 'followed_user')),
-  media_id integer,
-  media_type text check (media_type in ('movie', 'tv')),
-  media_title text,
-  media_poster_path text,
-  target_user_id uuid references public.profiles(id) on delete set null,
-  metadata jsonb default '{}',
-  created_at timestamptz default now() not null
-);
+-- Add check constraint to follows if not exists
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'follows_no_self_follow'
+  ) THEN
+    ALTER TABLE public.follows
+      ADD CONSTRAINT follows_no_self_follow
+      CHECK (follower_id <> following_id);
+  END IF;
+END $$;
 
--- =============================================
--- INDEXES
--- =============================================
-create index idx_reviews_media on public.reviews(media_id, media_type);
-create index idx_reviews_user on public.reviews(user_id);
-create index idx_review_likes_review on public.review_likes(review_id);
-create index idx_review_likes_user on public.review_likes(user_id);
-create index idx_watchlist_user on public.watchlist(user_id);
-create index idx_watchlist_media on public.watchlist(media_id, media_type);
-create index idx_watchlist_status on public.watchlist(user_id, status);
-create index idx_follows_follower on public.follows(follower_id);
-create index idx_follows_following on public.follows(following_id);
-create index idx_activities_user on public.activities(user_id);
-create index idx_activities_created on public.activities(created_at desc);
+-- ============================================
+-- RPC FUNCTIONS
+-- ============================================
 
--- =============================================
--- ROW LEVEL SECURITY (RLS)
--- =============================================
+CREATE OR REPLACE FUNCTION public.increment_review_likes(review_id uuid)
+RETURNS void LANGUAGE sql SECURITY DEFINER AS $$
+  UPDATE public.reviews
+  SET likes_count = likes_count + 1
+  WHERE id = review_id;
+$$;
 
--- Profiles: everyone can read, only owner can update
-alter table public.profiles enable row level security;
-create policy "Profiles are viewable by everyone" on public.profiles for select using (true);
-create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
+CREATE OR REPLACE FUNCTION public.decrement_review_likes(review_id uuid)
+RETURNS void LANGUAGE sql SECURITY DEFINER AS $$
+  UPDATE public.reviews
+  SET likes_count = GREATEST(likes_count - 1, 0)
+  WHERE id = review_id;
+$$;
 
--- Reviews: everyone can read, only authenticated can create, only owner can update/delete
-alter table public.reviews enable row level security;
-create policy "Reviews are viewable by everyone" on public.reviews for select using (true);
-create policy "Authenticated users can create reviews" on public.reviews for insert with check (auth.uid() = user_id);
-create policy "Users can update own reviews" on public.reviews for update using (auth.uid() = user_id);
-create policy "Users can delete own reviews" on public.reviews for delete using (auth.uid() = user_id);
+-- ============================================
+-- AUTO-SYNC TRIGGER
+-- ============================================
 
--- Review Likes: everyone can read, authenticated can create/delete own
-alter table public.review_likes enable row level security;
-create policy "Review likes are viewable by everyone" on public.review_likes for select using (true);
-create policy "Authenticated users can like reviews" on public.review_likes for insert with check (auth.uid() = user_id);
-create policy "Users can unlike reviews" on public.review_likes for delete using (auth.uid() = user_id);
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  INSERT INTO public.users (id, email, username, avatar_url)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(
+      NEW.raw_user_meta_data->>'preferred_username',
+      NEW.raw_user_meta_data->>'user_name',
+      LOWER(REPLACE(COALESCE(NEW.raw_user_meta_data->>'full_name', ''), ' ', '_')),
+      SPLIT_PART(NEW.email, '@', 1)
+    ),
+    COALESCE(
+      NEW.raw_user_meta_data->>'avatar_url',
+      NEW.raw_user_meta_data->>'picture'
+    )
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email      = EXCLUDED.email,
+    avatar_url = COALESCE(EXCLUDED.avatar_url, public.users.avatar_url),
+    updated_at = now();
+  RETURN NEW;
+END;
+$$;
 
--- Watchlist: public items visible to all, private only to owner, owner CRUD
-alter table public.watchlist enable row level security;
-create policy "Public watchlist items are viewable by everyone" on public.watchlist for select using (is_public = true or auth.uid() = user_id);
-create policy "Authenticated users can create watchlist items" on public.watchlist for insert with check (auth.uid() = user_id);
-create policy "Users can update own watchlist items" on public.watchlist for update using (auth.uid() = user_id);
-create policy "Users can delete own watchlist items" on public.watchlist for delete using (auth.uid() = user_id);
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- Follows: everyone can read, authenticated can create/delete own
-alter table public.follows enable row level security;
-create policy "Follows are viewable by everyone" on public.follows for select using (true);
-create policy "Authenticated users can follow" on public.follows for insert with check (auth.uid() = follower_id);
-create policy "Users can unfollow" on public.follows for delete using (auth.uid() = follower_id);
+-- ============================================
+-- BACKFILL existing auth users
+-- ============================================
 
--- Activities: everyone can read, system creates (via trigger or server action)
-alter table public.activities enable row level security;
-create policy "Activities are viewable by everyone" on public.activities for select using (true);
-create policy "Authenticated users can create activities" on public.activities for insert with check (auth.uid() = user_id);
+INSERT INTO public.users (id, email, username, avatar_url, created_at, updated_at)
+SELECT
+  au.id,
+  au.email,
+  COALESCE(
+    au.raw_user_meta_data->>'preferred_username',
+    au.raw_user_meta_data->>'user_name',
+    LOWER(REPLACE(COALESCE(au.raw_user_meta_data->>'full_name', ''), ' ', '_')),
+    SPLIT_PART(au.email, '@', 1)
+  ),
+  COALESCE(
+    au.raw_user_meta_data->>'avatar_url',
+    au.raw_user_meta_data->>'picture'
+  ),
+  au.created_at,
+  now()
+FROM auth.users au
+LEFT JOIN public.users pu ON pu.id = au.id
+WHERE pu.id IS NULL;
 
--- =============================================
--- TRIGGERS: Auto-log activities
--- =============================================
+-- ============================================
+-- ROW LEVEL SECURITY
+-- ============================================
 
--- Activity on review creation
-create or replace function public.log_review_activity()
-returns trigger as $$
-begin
-  insert into public.activities (user_id, activity_type, media_id, media_type, metadata)
-  values (
-    new.user_id,
-    'reviewed',
-    new.media_id,
-    new.media_type,
-    jsonb_build_object('rating', new.rating, 'review_id', new.id)
-  );
-  return new;
-end;
-$$ language plpgsql security definer;
+ALTER TABLE public.users        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.watchlist    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.review_likes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.follows      ENABLE ROW LEVEL SECURITY;
 
-create trigger on_review_created
-  after insert on public.reviews
-  for each row execute function public.log_review_activity();
+-- Drop existing policies before recreating (avoids "already exists" errors)
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Users are publicly readable"           ON public.users;
+  DROP POLICY IF EXISTS "Users can update own profile"         ON public.users;
+  DROP POLICY IF EXISTS "Watchlist is private to owner"        ON public.watchlist;
+  DROP POLICY IF EXISTS "Reviews are publicly readable"        ON public.reviews;
+  DROP POLICY IF EXISTS "Authenticated users can create reviews" ON public.reviews;
+  DROP POLICY IF EXISTS "Users can update own reviews"         ON public.reviews;
+  DROP POLICY IF EXISTS "Users can delete own reviews"         ON public.reviews;
+  DROP POLICY IF EXISTS "Review likes are publicly readable"   ON public.review_likes;
+  DROP POLICY IF EXISTS "Authenticated users can like reviews" ON public.review_likes;
+  DROP POLICY IF EXISTS "Users can unlike their own likes"     ON public.review_likes;
+  DROP POLICY IF EXISTS "Follows are publicly readable"        ON public.follows;
+  DROP POLICY IF EXISTS "Authenticated users can follow"       ON public.follows;
+  DROP POLICY IF EXISTS "Users can unfollow"                   ON public.follows;
+END $$;
 
--- Activity on watchlist status change
-create or replace function public.log_watchlist_activity()
-returns trigger as $$
-begin
-  -- Only log if it's a new insert or status changed
-  if (TG_OP = 'INSERT') then
-    insert into public.activities (user_id, activity_type, media_id, media_type, media_title, media_poster_path)
-    values (
-      new.user_id,
-      'added_to_watchlist',
-      new.media_id,
-      new.media_type,
-      new.title,
-      new.poster_path
-    );
-  elsif (TG_OP = 'UPDATE' and old.status != new.status) then
-    insert into public.activities (user_id, activity_type, media_id, media_type, media_title, media_poster_path)
-    values (
-      new.user_id,
-      case new.status
-        when 'completed' then 'completed'
-        when 'watching' then 'started_watching'
-        when 'dropped' then 'dropped'
-        else 'added_to_watchlist'
-      end,
-      new.media_id,
-      new.media_type,
-      new.title,
-      new.poster_path
-    );
-  end if;
-  return new;
-end;
-$$ language plpgsql security definer;
+-- USERS
+CREATE POLICY "Users are publicly readable"
+  ON public.users FOR SELECT USING (true);
 
-create trigger on_watchlist_changed
-  after insert or update on public.watchlist
-  for each row execute function public.log_watchlist_activity();
+CREATE POLICY "Users can update own profile"
+  ON public.users FOR UPDATE USING (auth.uid() = id);
 
--- Activity on follow
-create or replace function public.log_follow_activity()
-returns trigger as $$
-begin
-  insert into public.activities (user_id, activity_type, target_user_id)
-  values (new.follower_id, 'followed_user', new.following_id);
-  return new;
-end;
-$$ language plpgsql security definer;
+-- WATCHLIST
+CREATE POLICY "Watchlist is private to owner"
+  ON public.watchlist FOR ALL USING (auth.uid() = user_id);
 
-create trigger on_follow_created
-  after insert on public.follows
-  for each row execute function public.log_follow_activity();
+-- REVIEWS
+CREATE POLICY "Reviews are publicly readable"
+  ON public.reviews FOR SELECT USING (true);
 
--- =============================================
--- HELPER VIEWS
--- =============================================
+CREATE POLICY "Authenticated users can create reviews"
+  ON public.reviews FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- View: reviews with like count and user profile
-create or replace view public.reviews_with_user as
-select
-  r.*,
-  p.display_name,
-  p.username,
-  p.avatar_url,
-  coalesce(rl.like_count, 0) as like_count
-from public.reviews r
-join public.profiles p on r.user_id = p.id
-left join (
-  select review_id, count(*) as like_count
-  from public.review_likes
-  group by review_id
-) rl on r.id = rl.review_id;
+CREATE POLICY "Users can update own reviews"
+  ON public.reviews FOR UPDATE USING (auth.uid() = user_id);
 
--- Updated_at auto-update function
-create or replace function public.update_updated_at()
-returns trigger as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$ language plpgsql;
+CREATE POLICY "Users can delete own reviews"
+  ON public.reviews FOR DELETE USING (auth.uid() = user_id);
 
-create trigger update_profiles_updated_at before update on public.profiles for each row execute function public.update_updated_at();
-create trigger update_reviews_updated_at before update on public.reviews for each row execute function public.update_updated_at();
-create trigger update_watchlist_updated_at before update on public.watchlist for each row execute function public.update_updated_at();
+-- REVIEW LIKES
+CREATE POLICY "Review likes are publicly readable"
+  ON public.review_likes FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can like reviews"
+  ON public.review_likes FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can unlike their own likes"
+  ON public.review_likes FOR DELETE USING (auth.uid() = user_id);
+
+-- FOLLOWS
+CREATE POLICY "Follows are publicly readable"
+  ON public.follows FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can follow"
+  ON public.follows FOR INSERT WITH CHECK (auth.uid() = follower_id);
+
+CREATE POLICY "Users can unfollow"
+  ON public.follows FOR DELETE USING (auth.uid() = follower_id);

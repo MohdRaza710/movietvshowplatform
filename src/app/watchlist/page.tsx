@@ -8,7 +8,6 @@ import { motion } from 'framer-motion'
 import { getTMDBImageUrl } from '@/lib/tmdb'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Filter } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
@@ -63,7 +62,6 @@ export default function WatchlistPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -73,7 +71,6 @@ export default function WatchlistPage() {
         <p className="text-slate-400">Manage your movies and TV shows</p>
       </motion.div>
 
-      {/* Filter Buttons */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -101,7 +98,6 @@ export default function WatchlistPage() {
         ))}
       </motion.div>
 
-      {/* Watchlist Items */}
       {loading ? (
         <div className="text-center py-12 text-slate-400">Loading...</div>
       ) : items.length === 0 ? (
@@ -130,35 +126,46 @@ export default function WatchlistPage() {
                 </h2>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {statusItems.map((item) => (
-                    <motion.div
-                      key={item.id}
-                      whileHover={{ scale: 1.05 }}
-                      className="group relative"
-                    >
-                      <Link href={`/${item.media_type}/${item.media_id}`}>
-                        <div className="relative aspect-2/3 rounded-lg overflow-hidden">
-                          <Image
-                            src={getTMDBImageUrl(item.poster_path, 'w342')}
-                            alt={item.title}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="object-cover group-hover:scale-110 transition-transform"
-                          />
-                          <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  {statusItems.map((item) => {
+                    const displayTitle = item.title || item.name || 'Untitled'
+                    const posterPath = item.poster_path
 
-                          {item.rating && (
-                            <div className="absolute bottom-2 left-2 bg-yellow-500/90 px-2 py-1 rounded text-xs font-bold text-black opacity-0 group-hover:opacity-100 transition-opacity">
-                              {item.rating}/10
-                            </div>
-                          )}
-                        </div>
-                      </Link>
-                      <p className="mt-2 text-sm font-medium text-white truncate">
-                        {item.title}
-                      </p>
-                    </motion.div>
-                  ))}
+                    return (
+                      <motion.div
+                        key={item.id}
+                        whileHover={{ scale: 1.05 }}
+                        className="group relative"
+                      >
+                        <Link href={`/${item.media_type}/${item.media_id}`}>
+                          <div className="relative aspect-2/3 rounded-lg overflow-hidden">
+                            {posterPath ? (
+                              <Image
+                                src={getTMDBImageUrl(posterPath, 'w342')}
+                                alt={displayTitle}
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                className="object-cover group-hover:scale-110 transition-transform"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                                <span className="text-slate-500 text-sm">No poster</span>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                            {item.rating && (
+                              <div className="absolute bottom-2 left-2 bg-yellow-500/90 px-2 py-1 rounded text-xs font-bold text-black opacity-0 group-hover:opacity-100 transition-opacity">
+                                {item.rating}/10
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+                        <p className="mt-2 text-sm font-medium text-white truncate">
+                          {displayTitle}
+                        </p>
+                      </motion.div>
+                    )
+                  })}
                 </div>
               </motion.section>
             )

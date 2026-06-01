@@ -38,7 +38,7 @@ export function ReviewForm({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-6 bg-gradient-to-r from-slate-900 to-slate-800 rounded-lg border border-cyan-500/20"
+        className="p-6 bg-linear-to-r from-slate-900 to-slate-800 rounded-lg border border-cyan-500/20"
       >
         <p className="text-slate-300">Sign in to write a review</p>
       </motion.div>
@@ -73,7 +73,7 @@ export function ReviewForm({
       onSubmit={handleSubmit}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-4 p-6 bg-gradient-to-r from-slate-900 to-slate-800 rounded-lg border border-cyan-500/20"
+      className="space-y-4 p-6 bg-linear-to-r from-slate-900 to-slate-800 rounded-lg border border-cyan-500/20"
     >
       <div>
         <label className="block text-sm font-medium text-cyan-300 mb-2">

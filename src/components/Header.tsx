@@ -79,9 +79,9 @@ export function Header() {
             <Link href="/watchlist" className="text-slate-300 hover:text-cyan-300 transition-colors">
               Watchlist
             </Link>
-            <Link href="/feed" className="text-slate-300 hover:text-cyan-300 transition-colors">
+            {/* <Link href="/feed" className="text-slate-300 hover:text-cyan-300 transition-colors">
               Feed
-            </Link>
+            </Link> */}
           </nav>
 
           {/* Auth */}

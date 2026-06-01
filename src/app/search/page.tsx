@@ -1,12 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { searchMulti } from '@/lib/tmdb'
 import { MediaCard } from '@/components/MediaCard'
 import { motion } from 'framer-motion'
 
-export default function SearchPage() {
+function SearchResults() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ''
   const [results, setResults] = React.useState<any[]>([])
@@ -39,7 +39,7 @@ export default function SearchPage() {
   }, [query])
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
+    <>
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -94,6 +94,25 @@ export default function SearchPage() {
           ))}
         </motion.div>
       )}
+    </>
+  )
+}
+
+function SearchFallback() {
+  return (
+    <div className="mb-8">
+      <h1 className="text-4xl font-bold text-white mb-2">Search Results</h1>
+      <p className="text-slate-400">Loading...</p>
+    </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-12">
+      <Suspense fallback={<SearchFallback />}>
+        <SearchResults />
+      </Suspense>
     </div>
   )
 }

@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
-import { Play, X } from 'lucide-react'
+import { Play, X, BookmarkPlus, BookmarkCheck, ChevronDown, Check } from 'lucide-react'
 import { getTMDBImageUrl, getRating, getYear } from '@/lib/tmdb'
 import { ReviewForm } from '@/components/ReviewForm'
 import { ReviewCard } from '@/components/ReviewCard'
@@ -11,6 +11,9 @@ import { MediaCard } from '@/components/MediaCard'
 import { SocialShare } from '@/components/SocialShare'
 import { Button } from '@/components/ui/button'
 import { Movie } from '@/types'
+import { useAuthStore, useWatchlistStore } from '@/store'
+import { addToWatchlist, removeFromWatchlist, getUserWatchlist } from '@/actions'
+import { toast } from 'sonner'
 
 interface MoviePageClientProps {
   movie: Movie
@@ -18,15 +21,105 @@ interface MoviePageClientProps {
   shareUrl: string
 }
 
+type WatchlistStatus = 'plan_to_watch' | 'watching' | 'completed' | 'dropped'
+
+const STATUS_OPTIONS: { value: WatchlistStatus; label: string; icon: string }[] = [
+  { value: 'plan_to_watch', label: 'Plan to Watch', icon: '📋' },
+  { value: 'watching', label: 'Watching', icon: '👀' },
+  { value: 'completed', label: 'Completed', icon: '✅' },
+  { value: 'dropped', label: 'Dropped', icon: '❌' },
+]
+
 export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientProps) {
   const [trailerOpen, setTrailerOpen] = React.useState(false)
+  const [statusMenuOpen, setStatusMenuOpen] = React.useState(false)
+  const [watchlistLoading, setWatchlistLoading] = React.useState(false)
+  const menuRef = React.useRef<HTMLDivElement>(null)
 
-  // Find the official trailer from TMDB video results
+  const user = useAuthStore((state) => state.user)
+  const { items, addItem, removeItem, setItems } = useWatchlistStore()
+
+  // Find if this movie is already in the watchlist
+  const watchlistEntry = items.find(
+    (i) => i.media_type === 'movie' && i.media_id === movie.id
+  )
+  const isInWatchlist = !!watchlistEntry
+
+  // Load watchlist on mount if user is logged in and store is empty
+  React.useEffect(() => {
+    if (!user || items.length > 0) return
+    getUserWatchlist(user.id)
+      .then(setItems)
+      .catch(console.error)
+  }, [user])
+
+  // Close menu on outside click
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setStatusMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const handleAddWithStatus = async (status: WatchlistStatus) => {
+    if (!user) {
+      toast.error('Sign in to add to your watchlist')
+      return
+    }
+    setStatusMenuOpen(false)
+    setWatchlistLoading(true)
+    try {
+      // If already in watchlist, remove first then re-add with new status
+      if (watchlistEntry) {
+        await removeFromWatchlist(watchlistEntry.id)
+        removeItem(watchlistEntry.id)
+      }
+      const data = await addToWatchlist(
+        user.id,
+        'movie',
+        movie.id,
+        movie.title,
+        movie.poster_path
+      )
+      addItem({ ...data, status })
+      const label = STATUS_OPTIONS.find((s) => s.value === status)?.label
+      toast.success(`Added to watchlist as "${label}"`)
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        toast.error('Already in your watchlist')
+      } else {
+        toast.error(error.message || 'Failed to update watchlist')
+      }
+    } finally {
+      setWatchlistLoading(false)
+    }
+  }
+
+  const handleRemove = async () => {
+    if (!watchlistEntry) return
+    setWatchlistLoading(true)
+    try {
+      await removeFromWatchlist(watchlistEntry.id)
+      removeItem(watchlistEntry.id)
+      toast.success('Removed from watchlist')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to remove from watchlist')
+    } finally {
+      setWatchlistLoading(false)
+    }
+  }
+
   const trailer = movie.videos?.results?.find(
     (v) => v.type === 'Trailer' && v.site === 'YouTube'
   ) ?? movie.videos?.results?.[0]
 
   const hasTrailer = !!trailer
+  const currentStatusLabel = STATUS_OPTIONS.find(
+    (s) => s.value === watchlistEntry?.status
+  )
 
   return (
     <div className="min-h-full">
@@ -132,7 +225,8 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
 
             <p className="text-lg text-slate-200 leading-relaxed">{movie.overview}</p>
 
-            <div className="flex gap-4 flex-wrap">
+            <div className="flex gap-3 flex-wrap items-center">
+              {/* Trailer */}
               {hasTrailer && (
                 <Button
                   className="bg-cyan-500 hover:bg-cyan-600 gap-2"
@@ -142,10 +236,136 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
                   Watch Trailer
                 </Button>
               )}
-              <SocialShare title={movie.title} url={shareUrl} />
-              
-              <Button disabled className="bg-slate-700 gap-2">
 
+              {/* ── Watchlist Button ── */}
+              {user ? (
+                isInWatchlist ? (
+                  /* Already saved — pill + dropdown to change/remove */
+                  <div className="flex items-center gap-0" ref={menuRef}>
+                    <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/40 rounded-l-lg text-green-400 text-sm font-medium select-none">
+                      <BookmarkCheck size={16} />
+                      <span>
+                        {currentStatusLabel?.icon} {currentStatusLabel?.label ?? 'In Watchlist'}
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <button
+                        onClick={() => setStatusMenuOpen((v) => !v)}
+                        disabled={watchlistLoading}
+                        className="flex items-center px-2 py-2 bg-green-500/20 border border-green-500/40 border-l-0 rounded-r-lg text-green-400 hover:bg-green-500/30 transition-colors disabled:opacity-50"
+                        aria-label="Change status"
+                      >
+                        <ChevronDown
+                          size={15}
+                          className={`transition-transform duration-200 ${statusMenuOpen ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+
+                      <AnimatePresence>
+                        {statusMenuOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                            transition={{ duration: 0.13 }}
+                            className="absolute right-0 top-full mt-2 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-20 overflow-hidden"
+                          >
+                            <p className="px-3 pt-2.5 pb-1 text-xs text-slate-500 font-medium uppercase tracking-wider">
+                              Move to...
+                            </p>
+                            <div className="p-1">
+                              {STATUS_OPTIONS.map((opt) => (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => handleAddWithStatus(opt.value)}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-200 hover:bg-slate-700 transition-colors text-left"
+                                >
+                                  <span>{opt.icon}</span>
+                                  <span className="flex-1">{opt.label}</span>
+                                  {watchlistEntry?.status === opt.value && (
+                                    <Check size={13} className="text-green-400 shrink-0" />
+                                  )}
+                                </button>
+                              ))}
+                              <div className="h-px bg-slate-700 my-1 mx-2" />
+                              <button
+                                onClick={handleRemove}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left"
+                              >
+                                <X size={14} />
+                                Remove from Watchlist
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                ) : (
+                  /* Not saved — add dropdown */
+                  <div className="relative" ref={menuRef}>
+                    <button
+                      onClick={() => setStatusMenuOpen((v) => !v)}
+                      disabled={watchlistLoading}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-cyan-500/60 rounded-lg text-slate-200 text-sm font-medium transition-all disabled:opacity-50"
+                    >
+                      {watchlistLoading ? (
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <BookmarkPlus size={16} />
+                      )}
+                      Add to Watchlist
+                      <ChevronDown
+                        size={14}
+                        className={`ml-0.5 transition-transform duration-200 ${statusMenuOpen ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+
+                    <AnimatePresence>
+                      {statusMenuOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                          transition={{ duration: 0.13 }}
+                          className="absolute left-0 top-full mt-2 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-20 overflow-hidden"
+                        >
+                          <p className="px-3 pt-2.5 pb-1 text-xs text-slate-500 font-medium uppercase tracking-wider">
+                            Add as...
+                          </p>
+                          <div className="p-1">
+                            {STATUS_OPTIONS.map((opt) => (
+                              <button
+                                key={opt.value}
+                                onClick={() => handleAddWithStatus(opt.value)}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-200 hover:bg-slate-700 transition-colors text-left"
+                              >
+                                <span>{opt.icon}</span>
+                                <span>{opt.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )
+              ) : (
+                /* Not logged in */
+                <a href="/login">
+                  <button className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-slate-400 hover:text-slate-200 text-sm font-medium transition-all">
+                    <BookmarkPlus size={16} />
+                    Add to Watchlist
+                  </button>
+                </a>
+              )}
+
+              <SocialShare title={movie.title} url={shareUrl} />
+
+              <Button
+              disabled
+              className="bg-slate-700 hover:bg-cyan-600 gap-2"
+              >
                 <Play size={18} />
                 Watch Movie
               </Button>

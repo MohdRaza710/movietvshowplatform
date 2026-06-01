@@ -57,7 +57,7 @@ export function MediaCarousel({
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="aspect-[2/3] bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg animate-pulse"
+              className="aspect-2/3 bg-linear-to-r from-slate-800 to-slate-700 rounded-lg animate-pulse"
             />
           ))}
         </div>
@@ -80,7 +80,7 @@ export function MediaCarousel({
           {items.slice(0, 12).map((item, i) => (
             <div
               key={`${type}-${item.id}-${i}`}
-              className="flex-shrink-0 w-full md:w-1/3 lg:w-1/6"
+              className="shrink-0 w-full md:w-1/3 lg:w-1/6"
             >
               <MediaCard media={item} type={type} />
             </div>

@@ -26,7 +26,8 @@ export async function addToWatchlist(
   mediaType: 'movie' | 'tv',
   mediaId: number,
   title: string,
-  posterPath: string
+  posterPath: string,
+  status: 'plan_to_watch' | 'watching' | 'completed' | 'dropped' = 'plan_to_watch'
 ) {
   const supabase = await createServerClient()
   const { data, error } = await supabase
@@ -37,7 +38,7 @@ export async function addToWatchlist(
       media_id: mediaId,
       title,
       poster_path: posterPath,
-      status: 'plan_to_watch',
+      status,
     })
     .select()
     .single()
