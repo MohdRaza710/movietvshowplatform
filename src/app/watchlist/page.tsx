@@ -127,7 +127,7 @@ export default function WatchlistPage() {
 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {statusItems.map((item) => {
-                    const displayTitle = item.title || item.name || 'Untitled'
+                    const displayTitle = item.title || 'Untitled'
                     const posterPath = item.poster_path
 
                     return (
