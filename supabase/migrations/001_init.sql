@@ -31,7 +31,7 @@ create table if not exists reviews (
   media_type text not null check (media_type in ('movie', 'tv')),
   media_id integer not null,
   title text not null,
-  content text not null,
+  content text not null check (length(trim(content)) >= 10),
   rating integer not null check (rating >= 1 and rating <= 10),
   likes_count integer default 0,
   created_at timestamp default now(),

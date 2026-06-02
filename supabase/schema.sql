@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   media_type  text NOT NULL CHECK (media_type IN ('movie', 'tv')),
   media_id    integer NOT NULL,
   title       text NOT NULL,
-  content     text NOT NULL,
+  content     text NOT NULL CHECK (length(trim(content)) >= 10),
   rating      integer NOT NULL CHECK (rating BETWEEN 1 AND 10),
   created_at  timestamptz DEFAULT now() NOT NULL,
   updated_at  timestamptz DEFAULT now() NOT NULL

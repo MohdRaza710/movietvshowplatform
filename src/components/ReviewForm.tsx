@@ -47,6 +47,13 @@ export function ReviewForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Validate content length
+    if (content.trim().length < 10) {
+      toast.error('Review must be at least 10 characters long')
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -119,7 +126,7 @@ export function ReviewForm({
 
       <Button
         type="submit"
-        disabled={isLoading || !content.trim()}
+        disabled={isLoading || content.trim().length < 10}
         className="w-full bg-cyan-500 hover:bg-cyan-600"
       >
         {isLoading

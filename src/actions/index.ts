@@ -88,6 +88,16 @@ export async function createReview(
   content: string,
   rating: number
 ) {
+  // Validate content length
+  if (!content || content.trim().length < 10) {
+    throw new Error('Review must be at least 10 characters long')
+  }
+
+  // Validate rating
+  if (rating < 1 || rating > 10) {
+    throw new Error('Rating must be between 1 and 10')
+  }
+
   const supabase = await createServerClient()
   const { data, error } = await supabase
     .from('reviews')
@@ -96,7 +106,7 @@ export async function createReview(
       media_type: mediaType,
       media_id: mediaId,
       title,
-      content,
+      content: content.trim(),
       rating,
     })
     .select()
