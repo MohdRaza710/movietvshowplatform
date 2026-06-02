@@ -161,20 +161,21 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
       </AnimatePresence>
 
       {/* Hero Backdrop */}
-      <div className="relative h-100 overflow-hidden">
+      <div className="relative h-80 sm:h-100 md:h-120 overflow-hidden">
         <Image
           src={getTMDBImageUrl(movie.backdrop_path, 'original')}
           alt={movie.title}
           fill
           className="object-cover"
           priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
         />
         <div className="absolute inset-0 bg-linear-to-b from-transparent via-slate-950/50 to-slate-950" />
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 mt-32 relative z-10 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+      <div className="max-w-7xl mx-auto px-4 mt-8 sm:mt-16 md:mt-32 relative z-10 pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-12">
           {/* Poster */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -187,6 +188,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
                 alt={movie.title}
                 fill
                 className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
               />
             </div>
           </motion.div>
@@ -196,19 +198,19 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="md:col-span-2 space-y-6"
+            className="md:col-span-2 space-y-4 sm:space-y-6"
           >
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{movie.title}</h1>
-              <p className="text-slate-400">{getYear(movie.release_date)}</p>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2">{movie.title}</h1>
+              <p className="text-slate-400 text-sm sm:text-base">{getYear(movie.release_date)}</p>
             </div>
 
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2 bg-yellow-500/20 px-4 py-2 rounded-lg">
-                <span className="text-2xl font-bold text-yellow-400">{getRating(movie.vote_average)}</span>
-                <span className="text-slate-300">/10</span>
+            <div className="flex flex-wrap gap-2 sm:gap-4">
+              <div className="flex items-center gap-2 bg-yellow-500/20 px-3 sm:px-4 py-2 rounded-lg">
+                <span className="text-xl sm:text-2xl font-bold text-yellow-400">{getRating(movie.vote_average)}</span>
+                <span className="text-slate-300 text-sm sm:text-base">/10</span>
               </div>
-              <div className="px-4 py-2 bg-slate-800 rounded-lg text-slate-300">
+              <div className="px-3 sm:px-4 py-2 bg-slate-800 rounded-lg text-slate-300 text-sm sm:text-base">
                 {movie.popularity?.toFixed(0)} popularity
               </div>
             </div>
@@ -216,16 +218,16 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
             {movie.genres && movie.genres.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {movie.genres.map((genre) => (
-                  <span key={genre.id} className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/50 rounded-full text-cyan-300 text-sm">
+                  <span key={genre.id} className="px-2 sm:px-3 py-1 bg-cyan-500/20 border border-cyan-500/50 rounded-full text-cyan-300 text-xs sm:text-sm">
                     {genre.name}
                   </span>
                 ))}
               </div>
             )}
 
-            <p className="text-lg text-slate-200 leading-relaxed">{movie.overview}</p>
+            <p className="text-sm sm:text-base md:text-lg text-slate-200 leading-relaxed line-clamp-4 sm:line-clamp-none">{movie.overview}</p>
 
-            <div className="flex gap-3 flex-wrap items-center">
+            <div className="flex gap-2 sm:gap-3 flex-wrap items-center">
               {/* Trailer */}
               {hasTrailer && (
                 <Button
@@ -381,17 +383,18 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
             viewport={{ once: true }}
             className="mb-16"
           >
-            <h2 className="text-3xl font-bold text-white mb-6">Cast</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Cast</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
               {movie.credits.cast.slice(0, 12).map((actor) => (
                 <div key={actor.id} className="group cursor-pointer">
-                  <div className="relative aspect-square rounded-lg overflow-hidden mb-2">
+                  <div className="relative aspect-square rounded-lg overflow-hidden mb-2 bg-slate-800">
                     {actor.profile_path ? (
                       <Image
                         src={getTMDBImageUrl(actor.profile_path, 'w185')}
                         alt={actor.name}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform"
+                        sizes="(max-width: 640px) 25vw, (max-width: 1024px) 20vw, 15vw"
                       />
                     ) : (
                       <div className="w-full h-full bg-slate-800 flex items-center justify-center">
@@ -399,7 +402,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
                       </div>
                     )}
                   </div>
-                  <p className="font-semibold text-white text-sm line-clamp-1">{actor.name}</p>
+                  <p className="font-semibold text-white text-xs sm:text-sm line-clamp-1">{actor.name}</p>
                   <p className="text-slate-400 text-xs line-clamp-1">{actor.character}</p>
                 </div>
               ))}
@@ -452,8 +455,8 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl font-bold text-white mb-6">Recommendations</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Recommendations</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
               {movie.recommendations.results.slice(0, 12).map((rec: any) => (
                 <MediaCard key={rec.id} media={rec} type="movie" />
               ))}

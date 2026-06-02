@@ -52,8 +52,8 @@ export function MediaCarousel({
   if (isLoading) {
     return (
       <section className="py-8">
-        <h2 className="text-2xl font-bold text-white mb-6">{title}</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-6">{title}</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
@@ -68,19 +68,19 @@ export function MediaCarousel({
   return (
     <section className="py-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-white">{title}</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-white">{title}</h2>
       </div>
 
-      <div className="relative group">
+      <div className="relative group hidden sm:block">
         <div
           ref={scrollRef}
           onScroll={checkScroll}
-          className="flex gap-4 overflow-x-auto scrollbar-hide pb-4"
+          className="flex gap-2 sm:gap-4 overflow-x-auto scrollbar-hide pb-4"
         >
           {items.slice(0, 12).map((item, i) => (
             <div
               key={`${type}-${item.id}-${i}`}
-              className="shrink-0 w-full md:w-1/3 lg:w-1/6"
+              className="shrink-0 w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/6"
             >
               <MediaCard media={item} type={type} />
             </div>
@@ -106,6 +106,15 @@ export function MediaCarousel({
             <ChevronRight size={20} />
           </Button>
         )}
+      </div>
+
+      {/* Mobile Grid View */}
+      <div className="sm:hidden grid grid-cols-2 gap-2">
+        {items.slice(0, 6).map((item, i) => (
+          <div key={`${type}-${item.id}-${i}`}>
+            <MediaCard media={item} type={type} />
+          </div>
+        ))}
       </div>
     </section>
   )
