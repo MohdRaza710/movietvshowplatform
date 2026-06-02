@@ -138,15 +138,15 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.92, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="relative w-full max-w-4xl aspect-video rounded-xl overflow-hidden shadow-2xl"
+              className="relative w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl aspect-video rounded-lg sm:rounded-xl overflow-hidden shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setTrailerOpen(false)}
-                className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-colors"
+                className="absolute top-2 sm:top-3 right-2 sm:right-3 z-10 p-2 sm:p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-colors"
                 aria-label="Close trailer"
               >
-                <X size={18} />
+                <X size={20} className="sm:w-4.5 sm:h-4.5" />
               </button>
               <iframe
                 src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0`}

@@ -83,30 +83,31 @@ export function ReviewForm({
       className="space-y-4 p-6 bg-linear-to-r from-slate-900 to-slate-800 rounded-lg border border-cyan-500/20"
     >
       <div>
-        <label className="block text-sm font-medium text-cyan-300 mb-2">
+        <label className="block text-sm md:text-base font-medium text-cyan-300 mb-2">
           Your Rating
         </label>
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-4">
+          <div className="flex gap-0.5 md:gap-1 flex-wrap sm:flex-nowrap">
             {Array.from({ length: 10 }).map((_, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => setRating(i + 1)}
-                className="transition-transform hover:scale-110"
+                className="transition-transform hover:scale-110 active:scale-95 p-0.5"
               >
                 <Star
-                  size={24}
-                  className={
+                  className={`w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 transition-colors ${
                     i < rating
                       ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-slate-600'
-                  }
+                      : 'text-slate-600 hover:text-slate-500'
+                  }`}
                 />
               </button>
             ))}
           </div>
-          <span className="text-xl font-bold text-yellow-400">{rating}/10</span>
+          <span className="text-lg md:text-xl font-bold text-yellow-400 whitespace-nowrap">
+            {rating}/10
+          </span>
         </div>
       </div>
 
