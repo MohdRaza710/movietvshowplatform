@@ -35,7 +35,7 @@ export function HeroSection({ movie }: HeroSectionProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="absolute inset-0 flex flex-col justify-end p-4 sm:p-8 md:p-12"
+        className="absolute inset-0 flex flex-col justify-center-safe p-4 sm:p-8 md:p-12"
       >
         <div className="max-w-2xl space-y-4 sm:space-y-6">
           {/* Title */}

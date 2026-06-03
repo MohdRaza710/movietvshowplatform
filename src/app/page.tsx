@@ -1,6 +1,7 @@
 import { getTrendingMovies, getTrendingTV, getPopularMovies, getTopRatedMovies } from '@/lib/tmdb'
 import { MediaCarousel } from '@/components/MediaCarousel'
 import { HeroSection } from '@/components/HeroSection'
+import Footer from '@/components/Footer'
 
 export default async function HomePage() {
   try {
@@ -44,6 +45,7 @@ export default async function HomePage() {
             type="movie"
           />
         </div>
+        <Footer />
       </div>
     )
   } catch (error) {

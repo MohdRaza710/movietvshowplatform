@@ -44,6 +44,10 @@ export async function getNowPlayingMovies(page = 1) {
   return fetchTMDB<TMDBResponse<Movie>>('/movie/now_playing', { page })
 }
 
+export async function getAllMovies(page = 1) {
+  return fetchTMDB<TMDBResponse<Movie>>('/discover/movie', { page })
+}
+
 export async function getMovieDetails(id: number) {
   return fetchTMDB<Movie>(`/movie/${id}`, {
     append_to_response: 'credits,recommendations,videos',
@@ -72,6 +76,10 @@ export async function getPopularTV(page = 1) {
 
 export async function getTopRatedTV(page = 1) {
   return fetchTMDB<TMDBResponse<TVShow>>('/tv/top_rated', { page })
+}
+
+export async function getAllTvShows(page = 1) {
+  return fetchTMDB<TMDBResponse<TVShow>>('/discover/tv', { page })
 }
 
 export async function getTVShowDetails(id: number) {

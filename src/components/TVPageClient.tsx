@@ -161,108 +161,175 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
         )}
       </AnimatePresence>
 
-      {/* Hero Backdrop */}
-      <div className="relative h-80 sm:h-100 md:h-120 overflow-hidden">
+      {/* Hero Section */}
+      <div className="relative min-h-187.5 overflow-hidden">
         <Image
           src={getTMDBImageUrl(show.backdrop_path, 'original')}
           alt={show.name}
           fill
-          className="object-cover"
           priority
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
+          className="object-cover"
         />
-        <div className="absolute inset-0 bg-linear-to-b from-transparent via-slate-950/50 to-slate-950" />
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 mt-8 sm:mt-16 md:mt-32 relative z-10 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-12">
-          {/* Poster */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="md:col-span-1"
-          >
-            <div className="relative w-full aspect-2/3 rounded-lg overflow-hidden shadow-2xl">
-              <Image
-                src={getTMDBImageUrl(show.poster_path, 'w342')}
-                alt={show.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
-              />
-            </div>
-          </motion.div>
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-linear-to-r from-slate-950 via-slate-950/80 to-slate-950/30" />
+        <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/50 to-transparent" />
 
-          {/* Details */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="md:col-span-2 space-y-4 sm:space-y-6"
-          >
-            <div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2">{show.name}</h1>
-              <p className="text-slate-400 text-sm sm:text-base">{getYear(show.first_air_date)}</p>
-            </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 min-h-187.5 flex items-center">
+          <div className="grid md:grid-cols-[320px_1fr] gap-10 items-center w-full">
 
-            <div className="flex flex-wrap gap-2 sm:gap-4">
-              <div className="flex items-center gap-2 bg-yellow-500/20 px-3 sm:px-4 py-2 rounded-lg">
-                <span className="text-xl sm:text-2xl font-bold text-yellow-400">{getRating(show.vote_average)}</span>
-                <span className="text-slate-300 text-sm sm:text-base">/10</span>
+            {/* Desktop Poster */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="hidden md:block"
+            >
+              <div className="relative aspect-2/3 rounded-2xl overflow-hidden shadow-2xl">
+                <Image
+                  src={getTMDBImageUrl(show.poster_path, 'w500')}
+                  alt={show.name}
+                  fill
+                  className="object-cover"
+                />
               </div>
-              <div className="px-3 sm:px-4 py-2 bg-slate-800 rounded-lg text-slate-300 text-xs sm:text-sm">
-                {show.number_of_seasons} season{show.number_of_seasons !== 1 ? 's' : ''}
-              </div>
-              <div className="px-3 sm:px-4 py-2 bg-slate-800 rounded-lg text-slate-300 text-xs sm:text-sm">
-                {show.number_of_episodes} episode{show.number_of_episodes !== 1 ? 's' : ''}
-              </div>
-            </div>
+            </motion.div>
 
-            {show.genres && show.genres.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {show.genres.map((genre) => (
-                  <span key={genre.id} className="px-2 sm:px-3 py-1 bg-cyan-500/20 border border-cyan-500/50 rounded-full text-cyan-300 text-xs sm:text-sm">
+            {/* Details */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="max-w-3xl"
+            >
+              <div className="flex flex-wrap gap-3 mb-4">
+                {show.genres?.slice(0, 3).map((genre) => (
+                  <span
+                    key={genre.id}
+                    className="text-white/80 text-lg"
+                  >
                     {genre.name}
                   </span>
                 ))}
               </div>
-            )}
 
-            <p className="text-sm sm:text-base md:text-lg text-slate-200 leading-relaxed line-clamp-4 sm:line-clamp-none">{show.overview}</p>
+              <h1 className="text-5xl lg:text-7xl font-bold text-white mb-4">
+                {show.name}
+              </h1>
 
-            <div className="flex gap-2 sm:gap-3 flex-wrap items-center">
-              {hasTrailer && (
-                <Button
-                  className="bg-cyan-500 hover:bg-cyan-600 gap-2"
-                  onClick={() => setTrailerOpen(true)}
-                >
-                  <Play size={18} />
-                  Watch Trailer
-                </Button>
-              )}
+              <div className="flex flex-wrap gap-6 text-slate-300 mb-6">
+                <span>{getYear(show.first_air_date)}</span>
 
-              {/* Watchlist Button */}
-              {user ? (
-                isInWatchlist ? (
-                  /* Already saved */
-                  <div className="flex items-center gap-0" ref={menuRef}>
-                    <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/40 rounded-l-lg text-green-400 text-sm font-medium select-none">
-                      <BookmarkCheck size={16} />
-                      <span>
-                        {currentStatusLabel?.icon} {currentStatusLabel?.label ?? 'In Watchlist'}
-                      </span>
+                <span>
+                  ⭐ {getRating(show.vote_average)}/10
+                </span>
+
+                <span>
+                  {show.number_of_seasons} Season
+                  {show.number_of_seasons !== 1 ? 's' : ''}
+                </span>
+
+                <span>
+                  {show.number_of_episodes} Episodes
+                </span>
+              </div>
+
+              <p className="text-lg text-slate-200 leading-relaxed mb-8 max-w-2xl">
+                {show.overview}
+              </p>
+
+              <div className="flex gap-3 flex-wrap items-center">
+
+                {hasTrailer && (
+                  <Button
+                    className="bg-cyan-500 hover:bg-cyan-600 gap-2"
+                    onClick={() => setTrailerOpen(true)}
+                  >
+                    <Play size={18} />
+                    Watch Trailer
+                  </Button>
+                )}
+
+                {/* Watchlist Button */}
+                {user ? (
+                  isInWatchlist ? (
+                    /* Already saved */
+                    <div className="flex items-center gap-0" ref={menuRef}>
+                      <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/40 rounded-l-lg text-green-400 text-sm font-medium select-none">
+                        <BookmarkCheck size={16} />
+                        <span>
+                          {currentStatusLabel?.icon} {currentStatusLabel?.label ?? 'In Watchlist'}
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <button
+                          onClick={() => setStatusMenuOpen((v) => !v)}
+                          disabled={watchlistLoading}
+                          className="flex items-center px-2 py-2 bg-green-500/20 border border-green-500/40 border-l-0 rounded-r-lg text-green-400 hover:bg-green-500/30 transition-colors disabled:opacity-50"
+                          aria-label="Change status"
+                        >
+                          <ChevronDown
+                            size={15}
+                            className={`transition-transform duration-200 ${statusMenuOpen ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+
+                        <AnimatePresence>
+                          {statusMenuOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                              transition={{ duration: 0.13 }}
+                              className="absolute right-0 top-full mt-2 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-20 overflow-hidden"
+                            >
+                              <p className="px-3 pt-2.5 pb-1 text-xs text-slate-500 font-medium uppercase tracking-wider">
+                                Move to...
+                              </p>
+                              <div className="p-1">
+                                {STATUS_OPTIONS.map((opt) => (
+                                  <button
+                                    key={opt.value}
+                                    onClick={() => handleAddWithStatus(opt.value)}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-200 hover:bg-slate-700 transition-colors text-left"
+                                  >
+                                    <span>{opt.icon}</span>
+                                    <span className="flex-1">{opt.label}</span>
+                                    {watchlistEntry?.status === opt.value && (
+                                      <Check size={13} className="text-green-400 shrink-0" />
+                                    )}
+                                  </button>
+                                ))}
+                                <div className="h-px bg-slate-700 my-1 mx-2" />
+                                <button
+                                  onClick={handleRemove}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left"
+                                >
+                                  <X size={14} />
+                                  Remove from Watchlist
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
-                    <div className="relative">
+                  ) : (
+                    /* Not saved */
+                    <div className="relative" ref={menuRef}>
                       <button
                         onClick={() => setStatusMenuOpen((v) => !v)}
                         disabled={watchlistLoading}
-                        className="flex items-center px-2 py-2 bg-green-500/20 border border-green-500/40 border-l-0 rounded-r-lg text-green-400 hover:bg-green-500/30 transition-colors disabled:opacity-50"
-                        aria-label="Change status"
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-cyan-500/60 rounded-lg text-slate-200 text-sm font-medium transition-all disabled:opacity-50"
                       >
+                        {watchlistLoading ? (
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <BookmarkPlus size={16} />
+                        )}
+                        Add to Watchlist
                         <ChevronDown
-                          size={15}
-                          className={`transition-transform duration-200 ${statusMenuOpen ? 'rotate-180' : ''}`}
+                          size={14}
+                          className={`ml-0.5 transition-transform duration-200 ${statusMenuOpen ? 'rotate-180' : ''}`}
                         />
                       </button>
 
@@ -273,10 +340,10 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -6, scale: 0.96 }}
                             transition={{ duration: 0.13 }}
-                            className="absolute right-0 top-full mt-2 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-20 overflow-hidden"
+                            className="absolute left-0 top-full mt-2 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-20 overflow-hidden"
                           >
                             <p className="px-3 pt-2.5 pb-1 text-xs text-slate-500 font-medium uppercase tracking-wider">
-                              Move to...
+                              Add as...
                             </p>
                             <div className="p-1">
                               {STATUS_OPTIONS.map((opt) => (
@@ -286,93 +353,54 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
                                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-200 hover:bg-slate-700 transition-colors text-left"
                                 >
                                   <span>{opt.icon}</span>
-                                  <span className="flex-1">{opt.label}</span>
-                                  {watchlistEntry?.status === opt.value && (
-                                    <Check size={13} className="text-green-400 shrink-0" />
-                                  )}
+                                  <span>{opt.label}</span>
                                 </button>
                               ))}
-                              <div className="h-px bg-slate-700 my-1 mx-2" />
-                              <button
-                                onClick={handleRemove}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left"
-                              >
-                                <X size={14} />
-                                Remove from Watchlist
-                              </button>
                             </div>
                           </motion.div>
                         )}
                       </AnimatePresence>
                     </div>
-                  </div>
+                  )
                 ) : (
-                  /* Not saved */
-                  <div className="relative" ref={menuRef}>
-                    <button
-                      onClick={() => setStatusMenuOpen((v) => !v)}
-                      disabled={watchlistLoading}
-                      className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-cyan-500/60 rounded-lg text-slate-200 text-sm font-medium transition-all disabled:opacity-50"
-                    >
-                      {watchlistLoading ? (
-                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <BookmarkPlus size={16} />
-                      )}
+                  <a href="/login">
+                    <Button variant="outline" className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-slate-400 hover:text-slate-200 text-sm font-medium transition-all">
+                      <BookmarkPlus size={16} />
                       Add to Watchlist
-                      <ChevronDown
-                        size={14}
-                        className={`ml-0.5 transition-transform duration-200 ${statusMenuOpen ? 'rotate-180' : ''}`}
-                      />
-                    </button>
+                    </Button>
+                  </a>
+                )}
 
-                    <AnimatePresence>
-                      {statusMenuOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                          transition={{ duration: 0.13 }}
-                          className="absolute left-0 top-full mt-2 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-20 overflow-hidden"
-                        >
-                          <p className="px-3 pt-2.5 pb-1 text-xs text-slate-500 font-medium uppercase tracking-wider">
-                            Add as...
-                          </p>
-                          <div className="p-1">
-                            {STATUS_OPTIONS.map((opt) => (
-                              <button
-                                key={opt.value}
-                                onClick={() => handleAddWithStatus(opt.value)}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-200 hover:bg-slate-700 transition-colors text-left"
-                              >
-                                <span>{opt.icon}</span>
-                                <span>{opt.label}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )
-              ) : (
-                <a href="/login">
-                  <button className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-slate-400 hover:text-slate-200 text-sm font-medium transition-all">
-                    <BookmarkPlus size={16} />
-                    Add to Watchlist
-                  </button>
-                </a>
-              )}
+                <SocialShare title={show.name} url={shareUrl} />
 
-              <SocialShare title={show.name} url={shareUrl} />
+                <Button
+                  disabled
+                  className="bg-slate-700 gap-2"
+                >
+                  <Play size={18} />
+                  Watch Show
+                </Button>
 
-              <Button disabled className="bg-slate-700 gap-2">
-                <Play size={18} />
-                Watch show
-              </Button>
-            </div>
-          </motion.div>
+              </div>
+            </motion.div>
+          </div>
         </div>
+      </div>
+
+      {/* Mobile Poster */}
+      <div className="md:hidden max-w-7xl mx-auto px-4 -mt-24 relative z-20">
+        <div className="relative w-48 mx-auto aspect-2/3 rounded-2xl overflow-hidden shadow-2xl">
+          <Image
+            src={getTMDBImageUrl(show.poster_path, 'w500')}
+            alt={show.name}
+            fill
+            className="object-cover"
+          />
+        </div>
+      </div>
+
+      {/* Remaining Content */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
 
         {/* Cast, Reviews, Recommendations sections remain the same */}
         {/* ... (keeping the rest of your original code unchanged) */}

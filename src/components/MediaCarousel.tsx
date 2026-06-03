@@ -92,6 +92,7 @@ export function MediaCarousel({
             onClick={() => scroll('left')}
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-14 bg-cyan-500/90 hover:bg-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity z-10"
             size="icon"
+            variant="icon"
           >
             <ChevronLeft size={20} />
           </Button>
@@ -102,6 +103,7 @@ export function MediaCarousel({
             onClick={() => scroll('right')}
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-14 bg-cyan-500/90 hover:bg-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity z-10"
             size="icon"
+            variant="icon"
           >
             <ChevronRight size={20} />
           </Button>

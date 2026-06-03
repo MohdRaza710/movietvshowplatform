@@ -97,6 +97,12 @@ export function Header() {
 
             {/* Nav Links - Hidden on mobile */}
             <nav className="hidden lg:flex items-center gap-6">
+              <Link href="/movie" className="text-slate-300 hover:text-cyan-300 transition-colors">
+                Movies
+              </Link>
+              <Link href="/tv" className="text-slate-300 hover:text-cyan-300 transition-colors">
+                TV Shows
+              </Link>
               <Link href="/watchlist" className="text-slate-300 hover:text-cyan-300 transition-colors">
                 Watchlist
               </Link>
@@ -190,6 +196,20 @@ export function Header() {
           className="sm:hidden bg-slate-800 border-b border-slate-700 backdrop-blur-sm"
         >
           <div className="max-w-7xl mx-auto px-4 py-4 space-y-3">
+            <Link
+              href="/movie"
+              onClick={() => setShowMobileMenu(false)}
+              className="block px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-300 hover:text-cyan-300 text-sm"
+            >
+              Movies
+            </Link>
+            <Link
+              href="/tv"
+              onClick={() => setShowMobileMenu(false)}
+              className="block px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-300 hover:text-cyan-300 text-sm"
+            >
+              TV Shows
+            </Link>
             {user ? (
               <>
                 <Link
