@@ -68,8 +68,8 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
         await removeFromWatchlist(watchlistEntry.id)
         removeItem(watchlistEntry.id)
       }
-      const data = await addToWatchlist(user.id, 'movie', movie.id, movie.title, movie.poster_path)
-      addItem({ ...data, status })
+      const data = await addToWatchlist(user.id, 'movie', movie.id, movie.title, movie.poster_path, status)
+      addItem(data)
       const label = STATUS_OPTIONS.find((s) => s.value === status)?.label
       toast.success(`Added as "${label}"`)
     } catch (error: any) {
