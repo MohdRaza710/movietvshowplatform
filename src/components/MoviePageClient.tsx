@@ -122,7 +122,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.90, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-              className="relative w-full max-w-4xl aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/[0.08]"
+              className="relative w-full max-w-4xl aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/8"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -144,7 +144,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
       </AnimatePresence>
 
       {/* ── Hero ── */}
-      <div className="relative min-h-[80vh] overflow-hidden">
+      <div className="relative min-h-[80vh]">
         <Image
           src={getTMDBImageUrl(movie.backdrop_path, 'original')}
           alt={movie.title}
@@ -166,7 +166,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
               transition={{ duration: 0.6 }}
               className="hidden md:block"
             >
-              <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl glow-card ring-1 ring-white/10">
+              <div className="relative aspect-2/3 rounded-2xl overflow-hidden shadow-2xl glow-card ring-1 ring-white/10">
                 <Image
                   src={getTMDBImageUrl(movie.poster_path, 'w500')}
                   alt={movie.title}
@@ -186,7 +186,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
               {movie.genres && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {movie.genres.slice(0, 3).map((genre) => (
-                    <span key={genre.id} className="px-3 py-1 rounded-full text-xs font-medium bg-white/[0.07] border border-white/[0.10] text-slate-300">
+                    <span key={genre.id} className="px-3 py-1 rounded-full text-xs font-medium bg-white/[0.07] border border-white/10 text-slate-300">
                       {genre.name}
                     </span>
                   ))}
@@ -206,14 +206,14 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
                 </div>
 
                 {movie.release_date && (
-                  <div className="flex items-center gap-1.5 text-slate-400 text-sm bg-white/[0.05] border border-white/[0.07] px-3 py-1.5 rounded-xl">
+                  <div className="flex items-center gap-1.5 text-slate-400 text-sm bg-white/5 border border-white/[0.07] px-3 py-1.5 rounded-xl">
                     <Calendar size={14} />
                     {getYear(movie.release_date)}
                   </div>
                 )}
 
                 {movie.popularity && (
-                  <div className="flex items-center gap-1.5 text-slate-400 text-sm bg-white/[0.05] border border-white/[0.07] px-3 py-1.5 rounded-xl">
+                  <div className="flex items-center gap-1.5 text-slate-400 text-sm bg-white/5 border border-white/[0.07] px-3 py-1.5 rounded-xl">
                     <TrendingUp size={14} />
                     {movie.popularity.toFixed(0)} popularity
                   </div>
@@ -243,7 +243,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
                 {user ? (
                   isInWatchlist ? (
                     <div className="flex items-center gap-0" ref={menuRef}>
-                      <div className="flex items-center gap-2 px-3.5 py-3 bg-emerald-500/10 border border-emerald-500/25 rounded-l-xl text-emerald-400 text-sm font-medium select-none">
+                      <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/25 rounded-l-xl text-emerald-400 text-sm font-medium select-none">
                         <BookmarkCheck size={15} />
                         <span>{currentStatusLabel?.icon} {currentStatusLabel?.label ?? 'In Watchlist'}</span>
                       </div>
@@ -251,7 +251,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
                         <button
                           onClick={() => setStatusMenuOpen((v) => !v)}
                           disabled={watchlistLoading}
-                          className="flex items-center px-2.5 py-3 bg-emerald-500/10 border border-emerald-500/25 border-l-0 rounded-r-xl text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                          className="flex items-center px-2 py-3 bg-emerald-500/10 border border-emerald-500/25 border-l-0 rounded-r-xl text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
                         >
                           <ChevronDown size={15} className={`transition-transform duration-200 ${statusMenuOpen ? 'rotate-180' : ''}`} />
                         </button>
@@ -261,18 +261,18 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
                               initial={{ opacity: 0, y: -6, scale: 0.96 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                              className="absolute right-0 top-full mt-2 w-52 glass-strong rounded-2xl shadow-2xl z-20 overflow-hidden border border-white/[0.08]"
+                              className="absolute right-0 top-full mt-2 w-52 glass-strong rounded-2xl shadow-2xl z-20 overflow-hidden border border-white/8"
                             >
                               <p className="px-4 pt-3 pb-1 text-xs text-slate-500 font-semibold uppercase tracking-wider">Move to...</p>
                               <div className="p-1.5">
                                 {STATUS_OPTIONS.map((opt) => (
-                                  <button key={opt.value} onClick={() => handleAddWithStatus(opt.value)} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-200 hover:bg-white/[0.07] transition-colors">
+                                  <button key={opt.value} onClick={() => handleAddWithStatus(opt.value)} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-200 hover:bg-white/[0.07] transition-colors">
                                     <span>{opt.icon}</span>
                                     <span className="flex-1">{opt.label}</span>
                                     {watchlistEntry?.status === opt.value && <Check size={13} className="text-emerald-400" />}
                                   </button>
                                 ))}
-                                <div className="h-px bg-white/[0.06] my-1.5 mx-2" />
+                                <div className="h-px bg-white/6 my-1.5 mx-2" />
                                 <button onClick={handleRemove} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition-colors">
                                   <X size={14} />
                                   Remove from Watchlist
@@ -288,7 +288,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
                       <button
                         onClick={() => setStatusMenuOpen((v) => !v)}
                         disabled={watchlistLoading}
-                        className="flex items-center gap-2.5 px-5 py-3 bg-white/[0.07] hover:bg-white/[0.10] border border-white/[0.10] hover:border-violet-500/40 rounded-xl text-white text-sm font-medium transition-all disabled:opacity-50"
+                        className="flex items-center gap-2.5 px-5 py-3 bg-white/[0.07] hover:bg-white/10 border border-white/10 hover:border-violet-500/40 rounded-xl text-white text-sm font-medium transition-all disabled:opacity-50"
                       >
                         {watchlistLoading ? (
                           <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -304,7 +304,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
                             initial={{ opacity: 0, y: -6, scale: 0.96 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                            className="absolute left-0 top-full mt-2 w-52 glass-strong rounded-2xl shadow-2xl z-20 overflow-hidden border border-white/[0.08]"
+                            className="absolute left-0 top-full mt-2 w-52 glass-strong rounded-2xl shadow-2xl z-20 overflow-hidden border border-white/8"
                           >
                             <p className="px-4 pt-3 pb-1 text-xs text-slate-500 font-semibold uppercase tracking-wider">Add as...</p>
                             <div className="p-1.5">
@@ -322,7 +322,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
                   )
                 ) : (
                   <a href="/login">
-                    <Button variant="outline" className="flex items-center gap-2 border-white/[0.12] text-slate-300 hover:text-white hover:border-violet-500/40 text-sm">
+                    <Button variant="outline" className="flex items-center gap-2 border-white/12 text-slate-300 hover:text-white hover:border-violet-500/40 text-sm">
                       <BookmarkPlus size={16} />
                       Add to Watchlist
                     </Button>
@@ -338,7 +338,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
 
       {/* Mobile poster */}
       <div className="md:hidden max-w-7xl mx-auto px-4 -mt-20 relative z-20">
-        <div className="relative w-40 mx-auto aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10">
+        <div className="relative w-40 mx-auto aspect-2/3 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10">
           <Image src={getTMDBImageUrl(movie.poster_path, 'w500')} alt={movie.title} fill className="object-cover" />
         </div>
       </div>
@@ -357,7 +357,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
               {movie.credits.cast.slice(0, 12).map((actor) => (
                 <div key={actor.id} className="group cursor-pointer">
-                  <div className="relative aspect-square rounded-xl overflow-hidden mb-2 bg-slate-800/60 ring-1 ring-white/[0.06] group-hover:ring-violet-500/30 transition-all">
+                  <div className="relative aspect-square rounded-xl overflow-hidden mb-2 bg-slate-800/60 ring-1 ring-white/6 group-hover:ring-violet-500/30 transition-all">
                     {actor.profile_path ? (
                       <Image
                         src={getTMDBImageUrl(actor.profile_path, 'w185')}
@@ -407,7 +407,7 @@ export function MoviePageClient({ movie, reviews, shareUrl }: MoviePageClientPro
             {reviews.length > 0 ? (
               reviews.map((review: any) => <ReviewCard key={review.id} review={review} />)
             ) : (
-              <div className="text-center py-12 text-slate-600 bg-white/[0.02] rounded-2xl border border-white/[0.05]">
+              <div className="text-center py-12 text-slate-600 bg-white/2 rounded-2xl border border-white/5">
                 <Star size={28} className="mx-auto mb-3 text-slate-700" />
                 <p>No reviews yet. Be the first to review this movie!</p>
               </div>

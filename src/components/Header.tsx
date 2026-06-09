@@ -119,7 +119,7 @@ export function Header() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search movies, shows..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-white/[0.05] border border-white/[0.08] rounded-xl text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50 focus:bg-white/[0.07] focus:ring-2 focus:ring-violet-500/20 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/8 rounded-xl text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50 focus:bg-white/[0.07] focus:ring-2 focus:ring-violet-500/20 transition-all"
                 />
               </div>
             </form>
@@ -132,8 +132,8 @@ export function Header() {
                   href={href}
                   className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive(href)
-                      ? 'text-white bg-white/[0.08]'
-                      : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+                      ? 'text-white bg-white/8'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   {label}
@@ -155,7 +155,7 @@ export function Header() {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => setShowMenu(!showMenu)}
-                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/[0.08] hover:border-violet-500/30 hover:bg-white/[0.08] transition-all"
+                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/8 hover:border-violet-500/30 hover:bg-white/8 transition-all"
                   >
                     {user.avatar_url ? (
                       <img src={user.avatar_url} alt={user.username} className="w-7 h-7 rounded-full ring-1 ring-violet-500/30" />
@@ -164,7 +164,7 @@ export function Header() {
                         <User size={14} className="text-violet-300" />
                       </div>
                     )}
-                    <span className="text-sm text-white/90 font-medium max-w-[100px] truncate">{user.username}</span>
+                    <span className="text-sm text-white/90 font-medium max-w-25 truncate">{user.username}</span>
                   </motion.button>
 
                   <AnimatePresence>
@@ -174,7 +174,7 @@ export function Header() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -8, scale: 0.97 }}
                         transition={{ duration: 0.15, ease: 'easeOut' }}
-                        className="absolute right-0 mt-2 w-52 glass-strong rounded-2xl shadow-2xl overflow-hidden z-50 border border-white/[0.08]"
+                        className="absolute right-0 mt-2 w-52 glass-strong rounded-2xl shadow-2xl overflow-hidden z-50 border border-white/8"
                       >
                         <div className="p-1">
                           <Link
@@ -193,7 +193,7 @@ export function Header() {
                             <Bookmark size={15} className="text-violet-400" />
                             My Watchlist
                           </Link>
-                          <div className="h-px bg-white/[0.06] mx-2 my-1" />
+                          <div className="h-px bg-white/6 mx-2 my-1" />
                           <button
                             onClick={() => { handleLogout(); setShowMenu(false) }}
                             className="w-full flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-red-500/10 rounded-xl text-sm text-red-400 transition-colors"
@@ -239,13 +239,13 @@ export function Header() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search..."
-                    className="w-full pl-8 pr-3 py-2 bg-white/[0.05] border border-white/[0.08] rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50 transition-all"
+                    className="w-full pl-8 pr-3 py-2 bg-white/5 border border-white/8 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50 transition-all"
                   />
                 </div>
               </form>
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="p-2 rounded-lg bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.09] transition-colors"
+                className="p-2 rounded-lg bg-white/5 border border-white/8 hover:bg-white/9 transition-colors"
               >
                 <AnimatePresence mode="wait">
                   {showMobileMenu ? (
@@ -284,7 +284,7 @@ export function Header() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="sm:hidden overflow-hidden glass-strong border-b border-white/[0.07] sticky top-[57px] z-40"
+            className="sm:hidden overflow-hidden glass-strong border-b border-white/[0.07] sticky top-14.25 z-40"
           >
             <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
               {NAV_LINKS.map(({ href, label, icon: Icon }) => (
@@ -295,7 +295,7 @@ export function Header() {
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
                     isActive(href)
                       ? 'bg-violet-500/15 text-violet-300 border border-violet-500/20'
-                      : 'text-slate-300 hover:text-white hover:bg-white/[0.05]'
+                      : 'text-slate-300 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   <Icon size={16} />
@@ -303,14 +303,14 @@ export function Header() {
                 </Link>
               ))}
 
-              <div className="h-px bg-white/[0.06] my-3" />
+              <div className="h-px bg-white/6 my-3" />
 
               {user ? (
                 <>
                   <Link
                     href={`/profile/${user.id}`}
                     onClick={() => setShowMobileMenu(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/[0.05] transition-colors text-slate-300 hover:text-white text-sm"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors text-slate-300 hover:text-white text-sm"
                   >
                     {user.avatar_url ? (
                       <img src={user.avatar_url} alt={user.username} className="w-5 h-5 rounded-full" />
@@ -330,7 +330,7 @@ export function Header() {
               ) : (
                 <div className="flex gap-2 pt-1">
                   <Link href="/login" className="flex-1" onClick={() => setShowMobileMenu(false)}>
-                    <Button variant="outline" className="w-full border-white/[0.12] text-slate-300 hover:text-white text-sm">
+                    <Button variant="outline" className="w-full border-white/12 text-slate-300 hover:text-white text-sm">
                       Sign In
                     </Button>
                   </Link>

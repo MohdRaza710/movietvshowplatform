@@ -140,7 +140,7 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
       </AnimatePresence>
 
       {/* ── Hero ── */}
-      <div className="relative min-h-[80vh] overflow-hidden">
+      <div className="relative min-h-[80vh]">
         <Image
           src={getTMDBImageUrl(show.backdrop_path, 'original')}
           alt={show.name}
