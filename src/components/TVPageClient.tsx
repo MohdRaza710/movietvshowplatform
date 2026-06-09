@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
-import { Play, X, BookmarkPlus, BookmarkCheck, ChevronDown, Check } from 'lucide-react'
+import { Play, X, BookmarkPlus, BookmarkCheck, ChevronDown, Check, Star, Calendar, Tv } from 'lucide-react'
 import { getTMDBImageUrl, getRating, getYear } from '@/lib/tmdb'
 import { ReviewForm } from '@/components/ReviewForm'
 import { ReviewCard } from '@/components/ReviewCard'
@@ -39,54 +39,35 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
   const user = useAuthStore((state) => state.user)
   const { items, addItem, removeItem, setItems } = useWatchlistStore()
 
-  const watchlistEntry = items.find(
-    (i) => i.media_type === 'tv' && i.media_id === show.id
-  )
+  const watchlistEntry = items.find((i) => i.media_type === 'tv' && i.media_id === show.id)
   const isInWatchlist = !!watchlistEntry
 
-  // Load watchlist on mount if user is logged in and store is empty
   React.useEffect(() => {
     if (!user || items.length > 0) return
-    getUserWatchlist(user.id)
-      .then(setItems)
-      .catch(console.error)
+    getUserWatchlist(user.id).then(setItems).catch(console.error)
   }, [user])
 
-  // Close menu on outside click
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setStatusMenuOpen(false)
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setStatusMenuOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
   const handleAddWithStatus = async (status: WatchlistStatus) => {
-    if (!user) {
-      toast.error('Sign in to add to your watchlist')
-      return
-    }
+    if (!user) { toast.error('Sign in to add to your watchlist'); return }
     setStatusMenuOpen(false)
     setWatchlistLoading(true)
     try {
-      // If already in watchlist, remove first then re-add with new status
       if (watchlistEntry) {
         await removeFromWatchlist(watchlistEntry.id)
         removeItem(watchlistEntry.id)
       }
-      const data = await addToWatchlist(
-        user.id,
-        'tv',
-        show.id,
-        show.name,           // Fixed: Use name for TV shows
-        show.poster_path,    // Fixed: Correct poster path
-        status
-      )
+      const data = await addToWatchlist(user.id, 'tv', show.id, show.name, show.poster_path, status)
       addItem({ ...data, status })
       const label = STATUS_OPTIONS.find((s) => s.value === status)?.label
-      toast.success(`Added to watchlist as "${label}"`)
+      toast.success(`Added as "${label}"`)
     } catch (error: any) {
       if (error?.code === '23505') {
         toast.error('Already in your watchlist')
@@ -106,48 +87,45 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
       removeItem(watchlistEntry.id)
       toast.success('Removed from watchlist')
     } catch (error: any) {
-      toast.error(error.message || 'Failed to remove from watchlist')
+      toast.error(error.message || 'Failed to remove')
     } finally {
       setWatchlistLoading(false)
     }
   }
 
-  // Find the official trailer from TMDB video results
-  const trailer = show.videos?.results?.find(
-    (v) => v.type === 'Trailer' && v.site === 'YouTube'
-  ) ?? show.videos?.results?.[0]
-
+  const trailer = show.videos?.results?.find((v) => v.type === 'Trailer' && v.site === 'YouTube')
+    ?? show.videos?.results?.[0]
   const hasTrailer = !!trailer
-  const currentStatusLabel = STATUS_OPTIONS.find(
-    (s) => s.value === watchlistEntry?.status
-  )
+  const currentStatusLabel = STATUS_OPTIONS.find((s) => s.value === watchlistEntry?.status)
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : null
 
   return (
     <div className="min-h-full">
-      {/* Trailer Modal */}
+      {/* ── Trailer Modal ── */}
       <AnimatePresence>
         {trailerOpen && trailer && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
             onClick={() => setTrailerOpen(false)}
           >
             <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
+              initial={{ scale: 0.90, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="relative w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl aspect-video rounded-lg sm:rounded-xl overflow-hidden shadow-2xl"
+              exit={{ scale: 0.90, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+              className="relative w-full max-w-4xl aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/[0.08]"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setTrailerOpen(false)}
-                className="absolute top-2 sm:top-3 right-2 sm:right-3 z-10 p-2 sm:p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-colors"
-                aria-label="Close trailer"
+                className="absolute top-3 right-3 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/70 hover:bg-black/90 text-white border border-white/10 transition-colors"
               >
-                <X size={20} className="sm:w-4.5 sm:h-4.5" />
+                <X size={18} />
               </button>
               <iframe
                 src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0`}
@@ -161,149 +139,136 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
         )}
       </AnimatePresence>
 
-      {/* Hero Section */}
-      <div className="relative min-h-187.5 overflow-hidden">
+      {/* ── Hero ── */}
+      <div className="relative min-h-[80vh] overflow-hidden">
         <Image
           src={getTMDBImageUrl(show.backdrop_path, 'original')}
           alt={show.name}
           fill
           priority
-          className="object-cover"
+          className="object-cover object-top"
         />
+        <div className="absolute inset-0 bg-linear-to-r from-[#0B0F19] via-[#0B0F19]/80 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#0B0F19] via-[#0B0F19]/50 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-b from-[#0B0F19]/40 via-transparent to-transparent" />
 
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-linear-to-r from-slate-950 via-slate-950/80 to-slate-950/30" />
-        <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/50 to-transparent" />
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 min-h-[80vh] flex items-center py-20">
+          <div className="grid md:grid-cols-[300px_1fr] lg:grid-cols-[340px_1fr] gap-10 items-center w-full">
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 min-h-187.5 flex items-center">
-          <div className="grid md:grid-cols-[320px_1fr] gap-10 items-center w-full">
-
-            {/* Desktop Poster */}
+            {/* Poster */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, scale: 0.92, x: -20 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
               className="hidden md:block"
             >
-              <div className="relative aspect-2/3 rounded-2xl overflow-hidden shadow-2xl">
-                <Image
-                  src={getTMDBImageUrl(show.poster_path, 'w500')}
-                  alt={show.name}
-                  fill
-                  className="object-cover"
-                />
+              <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl glow-card ring-1 ring-white/10">
+                <Image src={getTMDBImageUrl(show.poster_path, 'w500')} alt={show.name} fill className="object-cover" />
               </div>
             </motion.div>
 
             {/* Details */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="max-w-3xl"
+              transition={{ delay: 0.15, duration: 0.6 }}
             >
-              <div className="flex flex-wrap gap-3 mb-4">
-                {show.genres?.slice(0, 3).map((genre) => (
-                  <span
-                    key={genre.id}
-                    className="text-white/80 text-lg"
-                  >
-                    {genre.name}
-                  </span>
-                ))}
-              </div>
+              {/* Genres */}
+              {show.genres && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {show.genres.slice(0, 3).map((genre) => (
+                    <span key={genre.id} className="px-3 py-1 rounded-full text-xs font-medium bg-white/[0.07] border border-white/[0.10] text-slate-300">
+                      {genre.name}
+                    </span>
+                  ))}
+                </div>
+              )}
 
-              <h1 className="text-5xl lg:text-7xl font-bold text-white mb-4">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-5 leading-tight tracking-tight">
                 {show.name}
               </h1>
 
-              <div className="flex flex-wrap gap-6 text-slate-300 mb-6">
-                <span>{getYear(show.first_air_date)}</span>
+              {/* Meta */}
+              <div className="flex flex-wrap gap-3 mb-6">
+                <div className="flex items-center gap-1.5 bg-amber-400/10 border border-amber-400/20 px-3 py-1.5 rounded-xl">
+                  <Star size={14} className="text-amber-400 fill-amber-400" />
+                  <span className="text-amber-300 font-bold text-sm">{getRating(show.vote_average)}/10</span>
+                </div>
 
-                <span>
-                  ⭐ {getRating(show.vote_average)}/10
-                </span>
+                {show.first_air_date && (
+                  <div className="flex items-center gap-1.5 text-slate-400 text-sm bg-white/[0.05] border border-white/[0.07] px-3 py-1.5 rounded-xl">
+                    <Calendar size={14} />
+                    {getYear(show.first_air_date)}
+                  </div>
+                )}
 
-                <span>
-                  {show.number_of_seasons} Season
-                  {show.number_of_seasons !== 1 ? 's' : ''}
-                </span>
+                {show.number_of_seasons && (
+                  <div className="flex items-center gap-1.5 text-slate-400 text-sm bg-white/[0.05] border border-white/[0.07] px-3 py-1.5 rounded-xl">
+                    <Tv size={14} />
+                    {show.number_of_seasons} Season{show.number_of_seasons !== 1 ? 's' : ''}
+                  </div>
+                )}
 
-                <span>
-                  {show.number_of_episodes} Episodes
-                </span>
+                {show.number_of_episodes && (
+                  <div className="text-slate-400 text-sm bg-white/[0.05] border border-white/[0.07] px-3 py-1.5 rounded-xl">
+                    {show.number_of_episodes} Episodes
+                  </div>
+                )}
               </div>
 
-              <p className="text-lg text-slate-200 leading-relaxed mb-8 max-w-2xl">
+              <p className="text-slate-300 text-base sm:text-lg leading-relaxed mb-8 max-w-2xl">
                 {show.overview}
               </p>
 
-              <div className="flex gap-3 flex-wrap items-center">
-
+              {/* Action buttons */}
+              <div className="flex flex-wrap gap-3">
                 {hasTrailer && (
-                  <Button
-                    className="bg-cyan-500 hover:bg-cyan-600 gap-2"
+                  <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => setTrailerOpen(true)}
+                    className="flex items-center gap-2.5 px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-sm shadow-lg shadow-violet-900/40 transition-colors"
                   >
-                    <Play size={18} />
+                    <Play size={16} className="fill-white" />
                     Watch Trailer
-                  </Button>
+                  </motion.button>
                 )}
 
-                {/* Watchlist Button */}
+                {/* Watchlist button */}
                 {user ? (
                   isInWatchlist ? (
-                    /* Already saved */
                     <div className="flex items-center gap-0" ref={menuRef}>
-                      <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/40 rounded-l-lg text-green-400 text-sm font-medium select-none">
-                        <BookmarkCheck size={16} />
-                        <span>
-                          {currentStatusLabel?.icon} {currentStatusLabel?.label ?? 'In Watchlist'}
-                        </span>
+                      <div className="flex items-center gap-2 px-3.5 py-3 bg-emerald-500/10 border border-emerald-500/25 rounded-l-xl text-emerald-400 text-sm font-medium select-none">
+                        <BookmarkCheck size={15} />
+                        <span>{currentStatusLabel?.icon} {currentStatusLabel?.label ?? 'In Watchlist'}</span>
                       </div>
                       <div className="relative">
                         <button
                           onClick={() => setStatusMenuOpen((v) => !v)}
                           disabled={watchlistLoading}
-                          className="flex items-center px-2 py-2 bg-green-500/20 border border-green-500/40 border-l-0 rounded-r-lg text-green-400 hover:bg-green-500/30 transition-colors disabled:opacity-50"
-                          aria-label="Change status"
+                          className="flex items-center px-2.5 py-3 bg-emerald-500/10 border border-emerald-500/25 border-l-0 rounded-r-xl text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
                         >
-                          <ChevronDown
-                            size={15}
-                            className={`transition-transform duration-200 ${statusMenuOpen ? 'rotate-180' : ''}`}
-                          />
+                          <ChevronDown size={15} className={`transition-transform duration-200 ${statusMenuOpen ? 'rotate-180' : ''}`} />
                         </button>
-
                         <AnimatePresence>
                           {statusMenuOpen && (
                             <motion.div
                               initial={{ opacity: 0, y: -6, scale: 0.96 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                              transition={{ duration: 0.13 }}
-                              className="absolute right-0 top-full mt-2 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-20 overflow-hidden"
+                              className="absolute right-0 top-full mt-2 w-52 glass-strong rounded-2xl shadow-2xl z-20 overflow-hidden border border-white/[0.08]"
                             >
-                              <p className="px-3 pt-2.5 pb-1 text-xs text-slate-500 font-medium uppercase tracking-wider">
-                                Move to...
-                              </p>
-                              <div className="p-1">
+                              <p className="px-4 pt-3 pb-1 text-xs text-slate-500 font-semibold uppercase tracking-wider">Move to...</p>
+                              <div className="p-1.5">
                                 {STATUS_OPTIONS.map((opt) => (
-                                  <button
-                                    key={opt.value}
-                                    onClick={() => handleAddWithStatus(opt.value)}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-200 hover:bg-slate-700 transition-colors text-left"
-                                  >
+                                  <button key={opt.value} onClick={() => handleAddWithStatus(opt.value)} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-200 hover:bg-white/[0.07] transition-colors">
                                     <span>{opt.icon}</span>
                                     <span className="flex-1">{opt.label}</span>
-                                    {watchlistEntry?.status === opt.value && (
-                                      <Check size={13} className="text-green-400 shrink-0" />
-                                    )}
+                                    {watchlistEntry?.status === opt.value && <Check size={13} className="text-emerald-400" />}
                                   </button>
                                 ))}
-                                <div className="h-px bg-slate-700 my-1 mx-2" />
-                                <button
-                                  onClick={handleRemove}
-                                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left"
-                                >
+                                <div className="h-px bg-white/[0.06] my-1.5 mx-2" />
+                                <button onClick={handleRemove} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition-colors">
                                   <X size={14} />
                                   Remove from Watchlist
                                 </button>
@@ -314,12 +279,11 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
                       </div>
                     </div>
                   ) : (
-                    /* Not saved */
                     <div className="relative" ref={menuRef}>
                       <button
                         onClick={() => setStatusMenuOpen((v) => !v)}
                         disabled={watchlistLoading}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-cyan-500/60 rounded-lg text-slate-200 text-sm font-medium transition-all disabled:opacity-50"
+                        className="flex items-center gap-2.5 px-5 py-3 bg-white/[0.07] hover:bg-white/[0.10] border border-white/[0.10] hover:border-violet-500/40 rounded-xl text-white text-sm font-medium transition-all disabled:opacity-50"
                       >
                         {watchlistLoading ? (
                           <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -327,31 +291,20 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
                           <BookmarkPlus size={16} />
                         )}
                         Add to Watchlist
-                        <ChevronDown
-                          size={14}
-                          className={`ml-0.5 transition-transform duration-200 ${statusMenuOpen ? 'rotate-180' : ''}`}
-                        />
+                        <ChevronDown size={14} className={`transition-transform ${statusMenuOpen ? 'rotate-180' : ''}`} />
                       </button>
-
                       <AnimatePresence>
                         {statusMenuOpen && (
                           <motion.div
                             initial={{ opacity: 0, y: -6, scale: 0.96 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                            transition={{ duration: 0.13 }}
-                            className="absolute left-0 top-full mt-2 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-20 overflow-hidden"
+                            className="absolute left-0 top-full mt-2 w-52 glass-strong rounded-2xl shadow-2xl z-20 overflow-hidden border border-white/[0.08]"
                           >
-                            <p className="px-3 pt-2.5 pb-1 text-xs text-slate-500 font-medium uppercase tracking-wider">
-                              Add as...
-                            </p>
-                            <div className="p-1">
+                            <p className="px-4 pt-3 pb-1 text-xs text-slate-500 font-semibold uppercase tracking-wider">Add as...</p>
+                            <div className="p-1.5">
                               {STATUS_OPTIONS.map((opt) => (
-                                <button
-                                  key={opt.value}
-                                  onClick={() => handleAddWithStatus(opt.value)}
-                                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-200 hover:bg-slate-700 transition-colors text-left"
-                                >
+                                <button key={opt.value} onClick={() => handleAddWithStatus(opt.value)} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-200 hover:bg-white/[0.07] transition-colors">
                                   <span>{opt.icon}</span>
                                   <span>{opt.label}</span>
                                 </button>
@@ -364,7 +317,7 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
                   )
                 ) : (
                   <a href="/login">
-                    <Button variant="outline" className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-slate-400 hover:text-slate-200 text-sm font-medium transition-all">
+                    <Button variant="outline" className="flex items-center gap-2 border-white/[0.12] text-slate-300 hover:text-white hover:border-violet-500/40 text-sm">
                       <BookmarkPlus size={16} />
                       Add to Watchlist
                     </Button>
@@ -372,118 +325,87 @@ export function TVPageClient({ show, reviews, shareUrl }: TVPageClientProps) {
                 )}
 
                 <SocialShare title={show.name} url={shareUrl} />
-
-                <Button
-                  disabled
-                  className="bg-slate-700 gap-2"
-                >
-                  <Play size={18} />
-                  Watch Show
-                </Button>
-
               </div>
             </motion.div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Poster */}
-      <div className="md:hidden max-w-7xl mx-auto px-4 -mt-24 relative z-20">
-        <div className="relative w-48 mx-auto aspect-2/3 rounded-2xl overflow-hidden shadow-2xl">
-          <Image
-            src={getTMDBImageUrl(show.poster_path, 'w500')}
-            alt={show.name}
-            fill
-            className="object-cover"
-          />
+      {/* Mobile poster */}
+      <div className="md:hidden max-w-7xl mx-auto px-4 -mt-20 relative z-20">
+        <div className="relative w-40 mx-auto aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10">
+          <Image src={getTMDBImageUrl(show.poster_path, 'w500')} alt={show.name} fill className="object-cover" />
         </div>
       </div>
 
-      {/* Remaining Content */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      {/* Main content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 space-y-16">
 
-        {/* Cast, Reviews, Recommendations sections remain the same */}
-        {/* ... (keeping the rest of your original code unchanged) */}
+        {/* Cast */}
         {show.credits?.cast && show.credits.cast.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-16"
-          >
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Cast</h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
+          <motion.section initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-7 tracking-tight">Cast</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
               {show.credits.cast.slice(0, 12).map((actor) => (
                 <div key={actor.id} className="group cursor-pointer">
-                  <div className="relative aspect-square rounded-lg overflow-hidden mb-2 bg-slate-800">
+                  <div className="relative aspect-square rounded-xl overflow-hidden mb-2 bg-slate-800/60 ring-1 ring-white/[0.06] group-hover:ring-violet-500/30 transition-all">
                     {actor.profile_path ? (
                       <Image
                         src={getTMDBImageUrl(actor.profile_path, 'w185')}
                         alt={actor.name}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform"
-                        sizes="(max-width: 640px) 25vw, (max-width: 1024px) 20vw, 15vw"
+                        className="object-cover group-hover:scale-[1.06] transition-transform duration-300"
+                        sizes="(max-width: 640px) 30vw, (max-width: 1024px) 20vw, 15vw"
                       />
                     ) : (
                       <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                        <span className="text-slate-600 text-xs">No image</span>
+                        <span className="text-slate-600 text-2xl">👤</span>
                       </div>
                     )}
                   </div>
                   <p className="font-semibold text-white text-xs sm:text-sm line-clamp-1">{actor.name}</p>
-                  <p className="text-slate-400 text-xs line-clamp-1">{actor.character}</p>
+                  <p className="text-slate-500 text-xs line-clamp-1 mt-0.5">{actor.character}</p>
                 </div>
               ))}
             </div>
           </motion.section>
         )}
+
         {/* Reviews */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          id="reviews"
-          className="mb-16"
-        >
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Reviews & Ratings</h2>
+        <motion.section initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} id="reviews">
+          <div className="flex items-center justify-between mb-7">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Reviews & Ratings</h2>
+            {avgRating && (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400/10 border border-amber-400/20">
+                <Star size={16} className="text-amber-400 fill-amber-400" />
+                <span className="text-amber-300 font-bold">{avgRating}</span>
+                <span className="text-slate-500 text-sm">/ 10</span>
+                <span className="text-slate-600 text-xs">({reviews.length})</span>
+              </div>
+            )}
+          </div>
+
           <div className="mb-8">
             <ReviewForm mediaType="tv" mediaId={show.id} title={show.name} />
           </div>
-
-          {reviews.length > 0 && (
-            <div className="mb-8 p-6 bg-slate-800/50 rounded-lg border border-slate-700">
-              <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-yellow-400">
-                    {(reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length).toFixed(1)}
-                  </div>
-                  <p className="text-slate-400 text-sm">Average Rating</p>
-                </div>
-                <div className="text-slate-300">
-                  Based on {reviews.length} review{reviews.length !== 1 ? 's' : ''}
-                </div>
-              </div>
-            </div>
-          )}
 
           <div className="space-y-4">
             {reviews.length > 0 ? (
               reviews.map((review: any) => <ReviewCard key={review.id} review={review} />)
             ) : (
-              <p className="text-slate-400 text-center py-8">No reviews yet. Be the first to review this show!</p>
+              <div className="text-center py-12 text-slate-600 bg-white/[0.02] rounded-2xl border border-white/[0.05]">
+                <Star size={28} className="mx-auto mb-3 text-slate-700" />
+                <p>No reviews yet. Be the first to review this show!</p>
+              </div>
             )}
           </div>
         </motion.section>
 
         {/* Recommendations */}
         {show.recommendations?.results && show.recommendations.results.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Recommendations</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
+          <motion.section initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-7 tracking-tight">More Like This</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
               {show.recommendations.results.slice(0, 12).map((rec: any) => (
                 <MediaCard key={rec.id} media={rec} type="tv" />
               ))}

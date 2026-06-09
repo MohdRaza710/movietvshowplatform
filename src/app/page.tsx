@@ -14,45 +14,53 @@ export default async function HomePage() {
 
     return (
       <div className="min-h-full">
-        {/* Hero Section */}
+        {/* Cinematic Hero */}
         {trendingMovies.results.length > 0 && (
           <HeroSection movie={trendingMovies.results[0]} />
         )}
 
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 py-12 space-y-16">
+        {/* Content sections */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 space-y-14">
           <MediaCarousel
-            title="🔥 Trending Movies"
+            title="Trending Movies"
             items={trendingMovies.results}
             type="movie"
+            viewAllHref="/movie"
           />
 
           <MediaCarousel
-            title="🌟 Trending TV Shows"
+            title="Trending TV Shows"
             items={trendingTV.results}
             type="tv"
+            viewAllHref="/tv"
           />
 
           <MediaCarousel
-            title="⭐ Popular Movies"
+            title="Popular Movies"
             items={popularMovies.results}
             type="movie"
+            viewAllHref="/movie"
           />
 
           <MediaCarousel
-            title="🏆 Top Rated"
+            title="Top Rated"
             items={topRatedMovies.results}
             type="movie"
+            viewAllHref="/movie"
           />
         </div>
+
         <Footer />
       </div>
     )
   } catch (error) {
     console.error('Failed to fetch movies:', error)
     return (
-      <div className="max-w-7xl mx-auto px-4 py-12 text-center">
-        <p className="text-slate-400">Failed to load content. Please try again later.</p>
+      <div className="max-w-7xl mx-auto px-4 py-24 text-center">
+        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
+          <span className="text-2xl">⚠️</span>
+        </div>
+        <p className="text-slate-400 text-lg">Failed to load content. Please try again later.</p>
       </div>
     )
   }

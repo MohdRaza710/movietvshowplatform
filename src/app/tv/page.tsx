@@ -33,33 +33,39 @@ export default function TVShowsPage() {
   }, [page])
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-slate-950 via-slate-900 to-slate-950 pt-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <h1 className="text-4xl font-bold mb-8 bg-linear-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">
-          All TV Shows
-        </h1>
+    <div className="min-h-screen pt-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="mb-10">
+          <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight mb-1">TV Shows</h1>
+          <p className="text-slate-500 text-sm">{tvShows.length} titles</p>
+        </div>
 
         {loading && page === 1 ? (
-          <div className="flex items-center justify-center min-h-100">
-            <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div key={i} className="rounded-xl overflow-hidden">
+                <div className="aspect-[2/3] bg-white/[0.04] rounded-xl animate-pulse" />
+                <div className="mt-2 h-3 bg-white/[0.04] rounded-full w-4/5 animate-pulse" />
+              </div>
+            ))}
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 mb-10">
               {tvShows.map(show => (
                 <MediaCard key={show.id} media={show} type="tv" />
               ))}
             </div>
 
             {hasMore && (
-              <div className="flex justify-center mb-12">
+              <div className="flex justify-center mb-14">
                 <button
                   onClick={() => setPage(prev => prev + 1)}
                   disabled={loading}
-                  className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 disabled:bg-cyan-500/50 text-white font-semibold rounded-lg transition-colors"
+                  className="flex items-center gap-2.5 px-8 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-semibold text-sm transition-colors shadow-lg shadow-violet-900/30"
                 >
                   {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     'Load More'
                   )}

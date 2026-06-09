@@ -2,28 +2,53 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { Search, User, LogOut, Menu, X } from 'lucide-react'
+import { useRouter, usePathname } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Search, User, LogOut, Menu, X, Film, Tv, Bookmark, Clapperboard } from 'lucide-react'
 import { useAuthStore } from '@/store'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 
+const NAV_LINKS = [
+  { href: '/movie', label: 'Movies', icon: Film },
+  { href: '/tv', label: 'TV Shows', icon: Tv },
+  { href: '/watchlist', label: 'Watchlist', icon: Bookmark },
+]
+
 export function Header() {
   const router = useRouter()
+  const pathname = usePathname()
   const { user, setUser } = useAuthStore()
   const [showMenu, setShowMenu] = React.useState(false)
   const [showMobileMenu, setShowMobileMenu] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState('')
+  const [scrolled, setScrolled] = React.useState(false)
+  const menuRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 30)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut()
       setUser(null)
       router.push('/')
-      toast.success('Logged out!')
-    } catch (error) {
+      toast.success('Logged out successfully')
+    } catch {
       toast.error('Failed to logout')
     }
   }
@@ -31,140 +56,172 @@ export function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
       setSearchQuery('')
+      setShowMobileMenu(false)
     }
+  }
+
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/'
+    return pathname.startsWith(href)
   }
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-linear-to-b from-slate-950 to-slate-950/80 border-b border-slate-800/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <motion.header
+        initial={false}
+        animate={scrolled ? 'scrolled' : 'top'}
+        variants={{
+          top: {
+            paddingTop: '1rem',
+            paddingBottom: '1rem',
+          },
+          scrolled: {
+            paddingTop: '0.625rem',
+            paddingBottom: '0.625rem',
+          },
+        }}
+        transition={{ duration: 0.25, ease: 'easeInOut' }}
+        className={`sticky top-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? 'glass-strong border-b border-white/[0.07] shadow-2xl shadow-black/40'
+            : 'bg-linear-to-b from-black/70 via-black/40 to-transparent border-b border-transparent'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between gap-4">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 shrink-0">
+            <Link href="/" className="shrink-0">
               <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                className="flex items-center gap-2.5"
               >
-                <div className="w-8 h-8 bg-linear-to-br from-cyan-400 to-cyan-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">CV</span>
+                <div className="w-9 h-9 rounded-xl bg-linear-to-br from-violet-500 to-purple-700 flex items-center justify-center shadow-lg glow-purple">
+                  <Clapperboard size={18} className="text-white" />
                 </div>
-                <span className="hidden sm:inline font-bold text-lg bg-linear-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">
+                <span className="hidden sm:inline font-bold text-lg text-gradient">
                   CineVault
                 </span>
               </motion.div>
             </Link>
 
-            {/* Search - Hidden on mobile */}
-            <form onSubmit={handleSearch} className="hidden sm:flex flex-1 max-w-md">
-              <div className="relative w-full">
+            {/* Desktop Search */}
+            <form onSubmit={handleSearch} className="hidden sm:flex flex-1 max-w-sm">
+              <div className="relative w-full group">
+                <Search
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-violet-400 transition-colors"
+                />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search movies, shows..."
-                  className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50 transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white/[0.05] border border-white/[0.08] rounded-xl text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50 focus:bg-white/[0.07] focus:ring-2 focus:ring-violet-500/20 transition-all"
                 />
-                <button
-                  type="submit"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-300"
-                >
-                  <Search size={18} />
-                </button>
               </div>
             </form>
 
-            {/* Mobile Search - Small version */}
-            <form onSubmit={handleSearch} className="sm:hidden flex-1 max-w-xs mx-2">
-              <div className="relative w-full">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search..."
-                  className="w-full px-2 py-1 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 text-sm focus:outline-none focus:border-cyan-500/50 transition-colors"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-300"
+            {/* Desktop Nav */}
+            <nav className="hidden lg:flex items-center gap-1">
+              {NAV_LINKS.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive(href)
+                      ? 'text-white bg-white/[0.08]'
+                      : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+                  }`}
                 >
-                  <Search size={16} />
-                </button>
-              </div>
-            </form>
-
-            {/* Nav Links - Hidden on mobile */}
-            <nav className="hidden lg:flex items-center gap-6">
-              <Link href="/movie" className="text-slate-300 hover:text-cyan-300 transition-colors">
-                Movies
-              </Link>
-              <Link href="/tv" className="text-slate-300 hover:text-cyan-300 transition-colors">
-                TV Shows
-              </Link>
-              <Link href="/watchlist" className="text-slate-300 hover:text-cyan-300 transition-colors">
-                Watchlist
-              </Link>
+                  {label}
+                  {isActive(href) && (
+                    <motion.div
+                      layoutId="nav-indicator"
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-violet-500"
+                    />
+                  )}
+                </Link>
+              ))}
             </nav>
 
-            {/* Desktop Auth - Hidden on mobile */}
+            {/* Desktop Auth */}
             <div className="hidden sm:flex items-center gap-3">
               {user ? (
-                <div className="relative">
-                  <button
+                <div className="relative" ref={menuRef}>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => setShowMenu(!showMenu)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/[0.08] hover:border-violet-500/30 hover:bg-white/[0.08] transition-all"
                   >
                     {user.avatar_url ? (
-                      <img src={user.avatar_url} alt={user.username} className="w-8 h-8 rounded-full" />
+                      <img src={user.avatar_url} alt={user.username} className="w-7 h-7 rounded-full ring-1 ring-violet-500/30" />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                        <User size={16} className="text-cyan-300" />
+                      <div className="w-7 h-7 rounded-full bg-violet-500/20 flex items-center justify-center ring-1 ring-violet-500/30">
+                        <User size={14} className="text-violet-300" />
                       </div>
                     )}
-                    <span className="text-sm text-white">{user.username}</span>
-                  </button>
+                    <span className="text-sm text-white/90 font-medium max-w-[100px] truncate">{user.username}</span>
+                  </motion.button>
 
-                  {showMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50"
-                    >
-                      <Link
-                        href={`/profile/${user.id}`}
-                        onClick={() => setShowMenu(false)}
-                        className="block px-4 py-2 hover:bg-slate-700 rounded-t-lg text-sm text-white"
+                  <AnimatePresence>
+                    {showMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                        transition={{ duration: 0.15, ease: 'easeOut' }}
+                        className="absolute right-0 mt-2 w-52 glass-strong rounded-2xl shadow-2xl overflow-hidden z-50 border border-white/[0.08]"
                       >
-                        My Profile
-                      </Link>
-                      <Link
-                        href="/watchlist"
-                        onClick={() => setShowMenu(false)}
-                        className="block px-4 py-2 hover:bg-slate-700 text-sm text-white"
-                      >
-                        My Watchlist
-                      </Link>
-                      <button
-                        onClick={() => { handleLogout(); setShowMenu(false) }}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-700 rounded-b-lg text-red-400 flex items-center gap-2 text-sm"
-                      >
-                        <LogOut size={16} />
-                        Logout
-                      </button>
-                    </motion.div>
-                  )}
+                        <div className="p-1">
+                          <Link
+                            href={`/profile/${user.id}`}
+                            onClick={() => setShowMenu(false)}
+                            className="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-white/[0.07] rounded-xl text-sm text-white/90 transition-colors"
+                          >
+                            <User size={15} className="text-violet-400" />
+                            My Profile
+                          </Link>
+                          <Link
+                            href="/watchlist"
+                            onClick={() => setShowMenu(false)}
+                            className="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-white/[0.07] rounded-xl text-sm text-white/90 transition-colors"
+                          >
+                            <Bookmark size={15} className="text-violet-400" />
+                            My Watchlist
+                          </Link>
+                          <div className="h-px bg-white/[0.06] mx-2 my-1" />
+                          <button
+                            onClick={() => { handleLogout(); setShowMenu(false) }}
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-red-500/10 rounded-xl text-sm text-red-400 transition-colors"
+                          >
+                            <LogOut size={15} />
+                            Sign Out
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <Link href="/login">
-                    <Button variant="outline" className="border-slate-700 text-slate-300 hover:text-white hover:border-slate-500">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-300 hover:text-white hover:bg-white/[0.07] text-sm"
+                    >
                       Sign In
                     </Button>
                   </Link>
                   <Link href="/register">
-                    <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
+                    <Button
+                      size="sm"
+                      className="bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-900/40 text-sm px-4"
+                    >
                       Sign Up
                     </Button>
                   </Link>
@@ -172,106 +229,122 @@ export function Header() {
               )}
             </div>
 
-            {/* Mobile Hamburger Menu */}
-            <button
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="sm:hidden p-2 rounded-lg hover:bg-slate-800 transition-colors"
-            >
-              {showMobileMenu ? (
-                <X size={24} className="text-cyan-300" />
-              ) : (
-                <Menu size={24} className="text-slate-300" />
-              )}
-            </button>
+            {/* Mobile: Search + Hamburger */}
+            <div className="sm:hidden flex items-center gap-2">
+              <form onSubmit={handleSearch} className="flex-1">
+                <div className="relative">
+                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search..."
+                    className="w-full pl-8 pr-3 py-2 bg-white/[0.05] border border-white/[0.08] rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50 transition-all"
+                  />
+                </div>
+              </form>
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="p-2 rounded-lg bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.09] transition-colors"
+              >
+                <AnimatePresence mode="wait">
+                  {showMobileMenu ? (
+                    <motion.div
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <X size={20} className="text-violet-300" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="menu"
+                      initial={{ rotate: 90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -90, opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <Menu size={20} className="text-slate-300" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </button>
+            </div>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       {/* Mobile Menu */}
-      {showMobileMenu && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="sm:hidden bg-slate-800 border-b border-slate-700 backdrop-blur-sm"
-        >
-          <div className="max-w-7xl mx-auto px-4 py-4 space-y-3">
-            <Link
-              href="/movie"
-              onClick={() => setShowMobileMenu(false)}
-              className="block px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-300 hover:text-cyan-300 text-sm"
-            >
-              Movies
-            </Link>
-            <Link
-              href="/tv"
-              onClick={() => setShowMobileMenu(false)}
-              className="block px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-300 hover:text-cyan-300 text-sm"
-            >
-              TV Shows
-            </Link>
-            {user ? (
-              <>
+      <AnimatePresence>
+        {showMobileMenu && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="sm:hidden overflow-hidden glass-strong border-b border-white/[0.07] sticky top-[57px] z-40"
+          >
+            <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
+              {NAV_LINKS.map(({ href, label, icon: Icon }) => (
                 <Link
-                  href={`/profile/${user.id}`}
+                  key={href}
+                  href={href}
                   onClick={() => setShowMobileMenu(false)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-300 hover:text-cyan-300"
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                    isActive(href)
+                      ? 'bg-violet-500/15 text-violet-300 border border-violet-500/20'
+                      : 'text-slate-300 hover:text-white hover:bg-white/[0.05]'
+                  }`}
                 >
-                  {user.avatar_url ? (
-                    <img src={user.avatar_url} alt={user.username} className="w-6 h-6 rounded-full" />
-                  ) : (
-                    <User size={16} className="text-cyan-300" />
-                  )}
-                  <span className="text-sm">My Profile</span>
+                  <Icon size={16} />
+                  {label}
                 </Link>
-                <Link
-                  href="/watchlist"
-                  onClick={() => setShowMobileMenu(false)}
-                  className="block px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-300 hover:text-cyan-300 text-sm"
-                >
-                  My Watchlist
-                </Link>
-                <button
-                  onClick={() => { handleLogout(); setShowMobileMenu(false) }}
-                  className="w-full text-left px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-red-400 flex items-center gap-2 text-sm"
-                >
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/watchlist"
-                  onClick={() => setShowMobileMenu(false)}
-                  className="block px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-300 hover:text-cyan-300 text-sm"
-                >
-                  Watchlist
-                </Link>
-                <div className="flex gap-2 pt-2">
-                  <Link href="/login" className="flex-1">
-                    <Button
-                      variant="outline"
-                      className="w-full border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 text-sm"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
+              ))}
+
+              <div className="h-px bg-white/[0.06] my-3" />
+
+              {user ? (
+                <>
+                  <Link
+                    href={`/profile/${user.id}`}
+                    onClick={() => setShowMobileMenu(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/[0.05] transition-colors text-slate-300 hover:text-white text-sm"
+                  >
+                    {user.avatar_url ? (
+                      <img src={user.avatar_url} alt={user.username} className="w-5 h-5 rounded-full" />
+                    ) : (
+                      <User size={16} className="text-violet-400" />
+                    )}
+                    My Profile
+                  </Link>
+                  <button
+                    onClick={() => { handleLogout(); setShowMobileMenu(false) }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 transition-colors text-red-400 text-sm"
+                  >
+                    <LogOut size={16} />
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <div className="flex gap-2 pt-1">
+                  <Link href="/login" className="flex-1" onClick={() => setShowMobileMenu(false)}>
+                    <Button variant="outline" className="w-full border-white/[0.12] text-slate-300 hover:text-white text-sm">
                       Sign In
                     </Button>
                   </Link>
-                  <Link href="/register" className="flex-1">
-                    <Button
-                      className="w-full bg-cyan-500 hover:bg-cyan-600 text-white text-sm"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
+                  <Link href="/register" className="flex-1" onClick={() => setShowMobileMenu(false)}>
+                    <Button className="w-full bg-violet-600 hover:bg-violet-500 text-white text-sm">
                       Sign Up
                     </Button>
                   </Link>
                 </div>
-              </>
-            )}
-          </div>
-        </motion.div>
-      )}
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }
